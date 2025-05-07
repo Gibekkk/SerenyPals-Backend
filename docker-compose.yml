@@ -1,0 +1,42 @@
+services:
+  db:
+    container_name: db-mysql
+    image: mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=z18YqNnLJI8R
+    volumes:
+      - salesmobil-volume:/var/lib/mysql
+    networks:
+      - salesmobil-network
+  backend:
+    container_name: springboot
+    build: .
+    restart: always
+    networks:
+      - salesmobil-network
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    restart: always
+    networks:
+      - salesmobil-network
+    ports:
+      - "5000:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=z18YqNnLJI8R
+    depends_on:
+      - db
+
+volumes:
+  salesmobil-volume:
+
+networks:
+  salesmobil-network:
+    driver: bridge
