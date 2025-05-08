@@ -14,11 +14,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginDTO {
     private String email;
-    private String username;
     private String password;
     private String fcmToken;
 
-    public boolean checkDTOUser() {
+    public boolean checkDTO() {
         trim();
         if(this.email == null) throw new IllegalArgumentException("Email Tidak Boleh Bernilai NULL");
         if(this.password == null) throw new IllegalArgumentException("Password Tidak Boleh Bernilai NULL");
@@ -26,16 +25,8 @@ public class LoginDTO {
         return email != null && password != null && fcmToken != null;
     }
 
-    public boolean checkDTOAdmin() {
-        trim();
-        if(this.username == null) throw new IllegalArgumentException("Username Tidak Boleh Bernilai NULL");
-        if(this.password == null) throw new IllegalArgumentException("Password Tidak Boleh Bernilai NULL");
-        return username != null && password != null;
-    }
-
     public void trim() {
         this.email = Optional.ofNullable(this.email).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
-        this.username = Optional.ofNullable(this.username).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
         this.password = Optional.ofNullable(this.password).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
         this.fcmToken = Optional.ofNullable(this.fcmToken).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
     }
