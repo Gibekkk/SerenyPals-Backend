@@ -96,6 +96,25 @@ public class AuthService {
         return loginInfoRepository.findById(loginId);
     }
 
+    public Optional<LoginInfo> findLoginInfoByEmail(String email) {
+        return loginInfoRepository.findByEmail(email);
+    }
+
+    public String verifyLoginInfo(LoginInfo loginInfo, String fcmToken) {
+        loginInfo.setVerifiedAt(LocalDate.now());
+        loginInfoRepository.save(loginInfo);
+        String token = Base64.getEncoder()
+                        .encodeToString(passwordHasherMatcher.hashPassword(LocalDateTime.now().toString()).getBytes());
+                Session session = new Session();
+                session.setToken(token);
+                session.setIdLogin(loginInfo);
+                session.setFcmToken(fcmToken);
+                session.setLastActive(LocalDateTime.now());
+                session.setFirstLogin(LocalDateTime.now());
+                sessionRepository.save(session);
+                return token;
+    }
+
     @Transactional
     public Boolean logout(String token) {
         Optional<Session> sessionOptional = sessionRepository.findByToken(token);

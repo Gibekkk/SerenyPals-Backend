@@ -49,7 +49,7 @@ public class OTPService {
     public Optional<OTP> refreshOTP(LoginInfo loginInfo) {
         String code = String.format("%0" + OTP_LENGTH + "d", new Random().nextInt(999_999));
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(OTP_TIME_OUT);
-        Optional<OTP> existingOtp = otpRepository.findByIdLoginInfo(loginInfo);
+        Optional<OTP> existingOtp = otpRepository.findByIdLogin(loginInfo);
         if (existingOtp.isPresent()) {
             OTP otp = existingOtp.get();
             otp.setExpiryTime(expiry);
@@ -104,7 +104,7 @@ public class OTPService {
     public String verifyOTPReturnFcmToken(String loginId, String code) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
-            if (otp.getIdLoginInfo().getId().equals(loginId) && otp.getCode().equals(code)) {
+            if (otp.getIdLogin().getId().equals(loginId) && otp.getCode().equals(code)) {
                 String fcmToken = otp.getFcmToken();
                 otpRepository.delete(otp);
                 return fcmToken;

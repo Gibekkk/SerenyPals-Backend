@@ -14,18 +14,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OTPVerifDTO {
     private String code;
-    private String userId;
+    private String loginId;
 
     public boolean checkDTO() {
         trim();
         if(this.code == null) throw new IllegalArgumentException("Kode OTP Tidak Boleh Bernilai NULL");
-        if(this.userId == null) throw new IllegalArgumentException("ID User Tidak Boleh Bernilai NULL");
-        return code != null && userId != null;
+        if(this.loginId == null) throw new IllegalArgumentException("ID Login Tidak Boleh Bernilai NULL");
+        return code != null && loginId != null;
     }
 
     public void trim() {
         this.code = Optional.ofNullable(this.code).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
-        this.userId = Optional.ofNullable(this.userId).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
+        this.loginId = Optional.ofNullable(this.loginId).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
     }
 
 }
