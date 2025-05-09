@@ -29,8 +29,11 @@ public class UserDTO {
             throw new IllegalArgumentException("Nama Tidak Boleh Bernilai NULL");
         if (this.nomorTelepon == null)
             throw new IllegalArgumentException("Nomor Telepon Tidak Boleh Bernilai NULL");
+        if (this.tanggalLahir == null)
+            throw new IllegalArgumentException("Tanggal Lahir Tidak Boleh Bernilai NULL");
         return this.nama != null &&
-                this.nomorTelepon != null && checkLength();
+                this.nomorTelepon != null &&
+                this.tanggalLahir != null && checkLength();
     }
 
     public boolean checkFullDTO() {
@@ -45,6 +48,7 @@ public class UserDTO {
 
     public boolean checkLength() {
         boolean nama = Optional.ofNullable(this.nama).map(s -> s.length() <= 50).orElse(true);
+        boolean password = Optional.ofNullable(this.nama).map(s -> s.length() <= 255).orElse(true);
         boolean email = Optional.ofNullable(this.email)
                 .map(s -> s.length() <= 50 && s.matches("^[a-zA-Z0-9. _%+-]+@[a-zA-Z0-9. -]+\\.[a-zA-Z]{2,}$"))
                 .orElse(true);
@@ -55,6 +59,8 @@ public class UserDTO {
 
         if (!nama)
             throw new IllegalArgumentException("Nama Tidak Valid atau Melewati Batas Karakter");
+        if (!password)
+            throw new IllegalArgumentException("Password Tidak Valid atau Melewati Batas Karakter");
         if (!email)
             throw new IllegalArgumentException("Email Tidak Valid atau Melewati Batas Karakter");
         if (!nomorTelepon)
@@ -63,6 +69,7 @@ public class UserDTO {
             throw new IllegalArgumentException("Tanggal Lahir Tidak Valid");
 
         return nama &&
+                password &&
                 email &&
                 nomorTelepon &&
                 tanggalLahir;
@@ -81,6 +88,7 @@ public class UserDTO {
 
     public void trim() {
         this.nama = Optional.ofNullable(this.nama).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
+        this.password = Optional.ofNullable(this.password).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
         this.email = Optional.ofNullable(this.email).map(String::trim).filter(s -> !s.isBlank()).orElse(null);
         this.nomorTelepon = Optional.ofNullable(this.nomorTelepon).map(String::trim).filter(s -> !s.isBlank())
                 .orElse(null);

@@ -16,13 +16,13 @@ import com.serenypals.restfulapi.model.*;
 public class CleanUpService {
     
     @Autowired
-    private UserRepository userRepository;
+    private LoginInfoRepository loginInfoRepository;
     
-    // @Autowired
-    // private LoginService loginService;
+    @Autowired
+    private AuthService authService;
 
-    // @Autowired
-    // private UserService userService;
+    @Autowired
+    private UserService userService;
 
     private int deleteDays = 30;
     private LocalDate today = LocalDate.now();
@@ -47,12 +47,11 @@ public class CleanUpService {
     //     }
     // }
 
-    // @Transactional
-    // public void cleanUser(User user) {
-    //     userService.deleteProfilePictureById(user.getId());
-    //     loginService.deleteSessionByUser(user.getId());
-    //     userRepository.delete(user);
-    // }
+    @Transactional
+    public void cleanLoginInfo(LoginInfo loginInfo) {
+        authService.deleteSession(loginInfo.getId());
+        loginInfoRepository.delete(loginInfo);
+    }
 
     @Transactional
     public void fullClean() {
