@@ -28,6 +28,7 @@ public class OTPService {
 
     private int OTP_LENGTH = 6;
     private int OTP_TIME_OUT = 1;
+    private int OTP_DELETION = 30;
 
     // Generate dan simpan OTP
     public OTP generateOTP(LoginInfo loginInfo, boolean isRegistration, String fcmToken) {
@@ -77,7 +78,7 @@ public class OTPService {
     public void clearRedundantOTP() {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
-            if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            if (otp.getExpiryTime().plusMinutes(OTP_DELETION).isBefore(LocalDateTime.now())) {
                 boolean isRegistration = otp.getIsRegistration();
                 LoginInfo loginInfo = otp.getIdLogin();
                 otpRepository.delete(otp);
@@ -88,11 +89,15 @@ public class OTPService {
         }
     }
 
+    public Boolean checkOTP(OTP otp, String loginId, String code) {
+        return otp.getIdLogin().getId().equals(loginId) && otp.getCode().equals(code) && !otp.getExpiryTime().isBefore(LocalDateTime.now());
+    }
+
     @Transactional
     public boolean verifyOTP(String loginId, String code) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
-            if (otp.getIdLogin().getId().equals(loginId) && otp.getCode().equals(code)) {
+            if (checkOTP(otp, loginId, code)) {
                 otpRepository.delete(otp);
                 return true;
             }
@@ -104,7 +109,7 @@ public class OTPService {
     public String verifyOTPReturnFcmToken(String loginId, String code) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
-            if (otp.getIdLogin().getId().equals(loginId) && otp.getCode().equals(code)) {
+            if (checkOTP(otp, loginId, code)) {
                 String fcmToken = otp.getFcmToken();
                 otpRepository.delete(otp);
                 return fcmToken;

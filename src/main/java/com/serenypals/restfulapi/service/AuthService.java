@@ -115,6 +115,12 @@ public class AuthService {
                 return token;
     }
 
+    public String changeEmailOTP(LoginInfo loginInfo, String email) {
+        loginInfo.setEmail(email);
+        loginInfoRepository.save(loginInfo);
+        return email;
+    }
+
     @Transactional
     public Boolean logout(String token) {
         Optional<Session> sessionOptional = sessionRepository.findByToken(token);
@@ -124,6 +130,14 @@ public class AuthService {
             return true;
         }
         return false;
+    }
+
+    public Boolean emailAvailable(String email) {
+        return !loginInfoRepository.existsByEmail(email);
+    }
+
+    public Boolean emailEditable(String email, LoginInfo loginInfo) {
+        return loginInfo.getEmail().equalsIgnoreCase(email) || emailAvailable(email);
     }
 
     @Transactional

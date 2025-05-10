@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.serenypals.restfulapi.dto.LoginDTO;
 import com.serenypals.restfulapi.dto.OTPVerifDTO;
 import com.serenypals.restfulapi.dto.UserDTO;
+import com.serenypals.restfulapi.dto.EmailDTO;
 import com.serenypals.restfulapi.dto.EmailDetails;
 import com.serenypals.restfulapi.model.OTP;
 import com.serenypals.restfulapi.model.LoginInfo;
@@ -123,11 +124,12 @@ public class AuthController {
         // String sessionToken = request.getHeader("Token");
         HTTPCode httpCode = HTTPCode.OK;
         try {
-            if(otpVerifDTO.checkDTO()){
+            if (otpVerifDTO.checkDTO()) {
                 Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByIdLogin(otpVerifDTO.getLoginId());
                 if (loginInfoOptional.isPresent()) {
                     LoginInfo loginInfo = loginInfoOptional.get();
-                    String fcmToken = otpService.verifyOTPReturnFcmToken(otpVerifDTO.getLoginId(), otpVerifDTO.getCode());
+                    String fcmToken = otpService.verifyOTPReturnFcmToken(otpVerifDTO.getLoginId(),
+                            otpVerifDTO.getCode());
                     if (fcmToken != null) {
                         String token = authService.verifyLoginInfo(loginInfo, fcmToken);
                         EmailDetails email = new EmailDetails();
@@ -148,7 +150,7 @@ public class AuthController {
                 }
             } else {
                 httpCode = HTTPCode.BAD_REQUEST;
-                    data = new ErrorMessage(httpCode, "Verify OTP Gagal, Data TIdak Valid");
+                data = new ErrorMessage(httpCode, "Verify OTP Gagal, Data TIdak Valid");
             }
         } catch (IllegalArgumentException e) {
             httpCode = HTTPCode.BAD_REQUEST;
@@ -170,7 +172,7 @@ public class AuthController {
         HTTPCode httpCode = HTTPCode.OK;
         try {
             if (userDTO.checkFullDTO()) {
-                if (!authService.findLoginInfoByEmail(userDTO.getEmail()).isPresent()) {
+                if (authService.emailAvailable(userDTO.getEmail())) {
                     LoginInfo loginInfo = authService.register(userDTO);
                     OTP otp = otpService.generateOTP(loginInfo, true, userDTO.getFcmToken());
                     String code = otp.getCode();
@@ -190,6 +192,66 @@ public class AuthController {
             } else {
                 httpCode = HTTPCode.BAD_REQUEST;
                 data = new ErrorMessage(httpCode, "Login Gagal, Data Tidak Valid");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @PostMapping("/{idLogin}/changeEmail")
+    public ResponseEntity<Object> changeEmail(HttpServletRequest request, @RequestBody EmailDTO emailDTO,
+            @PathVariable String idLogin)
+            throws Exception {
+        // String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (emailDTO.checkDTO()) {
+                Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByIdLogin(idLogin);
+                if (loginInfoOptional.isPresent()) {
+                    LoginInfo loginInfo = loginInfoOptional.get();
+                    if (loginInfo.getVerifiedAt() != null) {
+                        httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+                        data = new ErrorMessage(httpCode, "Akun Sudah Diverifikasi, Silakan Gunakan Fitur Lain");
+                    } else {
+                        if (authService.emailEditable(emailDTO.getEmail(), loginInfo)) {
+                            String editedEmail = authService.changeEmailOTP(loginInfo, emailDTO.getEmail());
+                            Optional<OTP> otpOptional = otpService.refreshOTP(loginInfo);
+                            if (otpOptional.isPresent()) {
+                                OTP otp = otpOptional.get();
+                                String code = otp.getCode();
+                                String expiryTime = otp.getExpiryTime().toString();
+                                EmailDetails email = new EmailDetails();
+                                email.setRecipient(editedEmail);
+                                email.setSubject("Verifikasi Akun SerenyPals");
+                                email.setMsgBody("Kode OTP Anda: " + code + "\n" +
+                                        "Berlaku selama 1 menit setelah anda menerima pesan ini\n" +
+                                        "Silakan masukkan kode ini untuk menyelesaikan pendaftaran.");
+                                emailService.sendEmail(email);
+                                data = Map.of("loginId", loginInfo.getId(), "expiryTime", expiryTime);
+                            } else {
+                                httpCode = HTTPCode.NOT_FOUND;
+                                data = new ErrorMessage(httpCode, "Ganti Email Registrasi Gagal, OTP Tidak Ditemukan");
+                            }
+                        } else {
+                            httpCode = HTTPCode.CONFLICT;
+                            data = new ErrorMessage(httpCode, "Email Sudah Terdaftar");
+                        }
+                    }
+                } else {
+                    httpCode = HTTPCode.NOT_FOUND;
+                    data = new ErrorMessage(httpCode, "Gagal Mengganti Email, ID Login Tidak Ditemukan");
+                }
+            } else {
+                httpCode = HTTPCode.BAD_REQUEST;
+                data = new ErrorMessage(httpCode, "Pergantian Email Gagal, Data Tidak Valid");
             }
         } catch (IllegalArgumentException e) {
             httpCode = HTTPCode.BAD_REQUEST;
