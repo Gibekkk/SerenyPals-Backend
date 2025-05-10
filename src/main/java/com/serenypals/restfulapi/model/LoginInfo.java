@@ -43,6 +43,9 @@ public class LoginInfo {
     @Column(name = "edited_at", nullable = false)
     private LocalDate editedAt;
 
+    @Column(name = "verified_at", nullable = true)
+    private LocalDate verifiedAt;
+
     @OneToOne(mappedBy = "idLogin", cascade = CascadeType.ALL)
     private User idUser;
 }

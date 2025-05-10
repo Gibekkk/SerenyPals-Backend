@@ -29,14 +29,14 @@ import com.serenypals.restfulapi.util.PasswordHasherMatcher;
 public class ImageService {
 
     @Autowired
-    private PasswordHasherMatcher passwordMaker;
+    private PasswordHasherMatcher passwordHasherMatcher;
 
     @Value("${storage.server-host}${storage.api-prefix}/")
     private String serverPath;
 
     public String saveImage(String fileName, MultipartFile file, String pathToFoto, boolean fitPicture, Boolean isCompressing) {
         try {
-            fileName = Base64.getEncoder().encodeToString(passwordMaker.hashPassword(fileName).getBytes());
+            fileName = Base64.getEncoder().encodeToString(passwordHasherMatcher.hashPassword(fileName).getBytes());
             Path uploadPath = Paths.get(pathToFoto);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);

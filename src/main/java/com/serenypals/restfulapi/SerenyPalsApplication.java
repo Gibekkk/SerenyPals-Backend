@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneOffset;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -43,7 +42,7 @@ public class SerenyPalsApplication implements CommandLineRunner {
     @Bean
     GoogleCredentials googleCredentials() throws IOException {
         GoogleCredentials googleCredentials = GoogleCredentials.fromStream(
-                new ClassPathResource("firebase-secret").getInputStream());
+                new ClassPathResource("serenypals-firebase-adminsdk-fbsvc-afd6196ec2.json").getInputStream());
         return googleCredentials;
     }
 

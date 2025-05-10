@@ -1,5 +1,6 @@
 package com.serenypals.restfulapi.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
@@ -7,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.OneToOne;
 import lombok.Setter;
@@ -15,6 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -41,4 +44,10 @@ public class User {
     
     @Column(name = "tanggal_lahir", nullable = false)
     private LocalDate tanggalLahir;
+
+    @OneToOne(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private UserInfo userInfo;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<UserTask> userTask;
 }
