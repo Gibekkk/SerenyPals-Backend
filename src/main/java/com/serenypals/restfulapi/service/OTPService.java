@@ -31,7 +31,7 @@ public class OTPService {
     private int OTP_DELETION = 30;
 
     // Generate dan simpan OTP
-    public OTP generateOTP(LoginInfo loginInfo, boolean isRegistration, String fcmToken) {
+    public OTP generateOTP(LoginInfo loginInfo, boolean isRegistration, String fcmTokenEmail) {
         clearExistingOTP(loginInfo);
         String code = String.format("%0" + OTP_LENGTH + "d", new Random().nextInt(999_999));
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(OTP_TIME_OUT);
@@ -41,9 +41,13 @@ public class OTPService {
         otp.setExpiryTime(expiry);
         otp.setIsRegistration(isRegistration);
         otp.setIdLogin(loginInfo);
-        otp.setFcmToken(fcmToken);
+        otp.setFcmTokenEmail(fcmTokenEmail);
         otpRepository.save(otp);
         return otp;
+    }
+
+    public Boolean emailAvailable(String email) {
+        return !otpRepository.existsByFcmTokenEmail(email);
     }
 
     // Generate dan simpan OTP
@@ -68,7 +72,7 @@ public class OTPService {
             OTP otp = existingOtp.get();
             boolean isRegistration = otp.getIsRegistration();
             otpRepository.delete(otp);
-            if (isRegistration){
+            if (isRegistration) {
                 cleanUpService.cleanLoginInfo(loginInfo);
             }
         }
@@ -82,7 +86,7 @@ public class OTPService {
                 boolean isRegistration = otp.getIsRegistration();
                 LoginInfo loginInfo = otp.getIdLogin();
                 otpRepository.delete(otp);
-                if (isRegistration){
+                if (isRegistration) {
                     cleanUpService.cleanLoginInfo(loginInfo);
                 }
             }
@@ -90,14 +94,17 @@ public class OTPService {
     }
 
     public Boolean checkOTP(OTP otp, String loginId, String code) {
-        return otp.getIdLogin().getId().equals(loginId) && otp.getCode().equals(code) && !otp.getExpiryTime().isBefore(LocalDateTime.now());
+        return otp.getIdLogin().getId().equals(loginId) && otp.getCode().equals(code)
+                && !otp.getExpiryTime().isBefore(LocalDateTime.now());
     }
 
     @Transactional
-    public boolean verifyOTP(String loginId, String code) {
+    public boolean verifyOTP(String loginId, String code, Boolean isRegistration) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
             if (checkOTP(otp, loginId, code)) {
+                if ((isRegistration && !otp.getIsRegistration()) || (!isRegistration && otp.getIsRegistration()))
+                    return false;
                 otpRepository.delete(otp);
                 return true;
             }
@@ -106,11 +113,13 @@ public class OTPService {
     }
 
     @Transactional
-    public String verifyOTPReturnFcmToken(String loginId, String code) {
+    public String verifyOTPReturnFcmTokenEmail(String loginId, String code, Boolean isRegistration) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
             if (checkOTP(otp, loginId, code)) {
-                String fcmToken = otp.getFcmToken();
+                if ((isRegistration && !otp.getIsRegistration()) || (!isRegistration && otp.getIsRegistration()))
+                    return null;
+                String fcmToken = otp.getFcmTokenEmail();
                 otpRepository.delete(otp);
                 return fcmToken;
             }

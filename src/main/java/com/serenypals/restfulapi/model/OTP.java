@@ -32,8 +32,8 @@ public class OTP {
     @Column(name = "code", length = 50, nullable = false)
     private String code;
 
-    @Column(name = "fcm_token", length = 255, nullable = false)
-    private String fcmToken;
+    @Column(name = "fcm_token_email", length = 255, nullable = false)
+    private String fcmTokenEmail;
 
     @Column(name = "expiry_time", nullable = false)
     private LocalDateTime expiryTime;

@@ -91,10 +91,17 @@ public class AuthController {
                     String expiryTime = otp.getExpiryTime().toString();
                     EmailDetails email = new EmailDetails();
                     email.setRecipient(loginInfo.getEmail());
-                    email.setSubject("Verifikasi Akun SerenyPals");
-                    email.setMsgBody("Kode OTP Anda: " + code + "\n" +
-                            "Berlaku selama 1 menit setelah anda menerima pesan ini\n" +
-                            "Silakan masukkan kode ini untuk menyelesaikan pendaftaran.");
+                    if (otp.getIsRegistration()) {
+                        email.setSubject("Verifikasi Akun SerenyPals");
+                        email.setMsgBody("Kode OTP Anda: " + code + "\n" +
+                                "Berlaku selama 1 menit setelah anda menerima pesan ini\n" +
+                                "Silakan masukkan kode ini untuk menyelesaikan pendaftaran.");
+                    } else {
+                        email.setSubject("Verifikasi Ganti Email");
+                        email.setMsgBody("Kode OTP Anda: " + code + "\n" +
+                                "Berlaku selama 1 menit setelah anda menerima pesan ini\n" +
+                                "Silakan masukkan kode ini untuk mengganti email Anda.");
+                    }
                     emailService.sendEmail(email);
                     data = Map.of("loginId", loginInfo.getId(), "expiryTime", expiryTime);
                 } else {
@@ -118,8 +125,8 @@ public class AuthController {
                 .body(data);
     }
 
-    @PostMapping("/verifyOtp")
-    public ResponseEntity<Object> verifyOtp(HttpServletRequest request, @RequestBody OTPVerifDTO otpVerifDTO)
+    @PostMapping("/verifyOtp/register")
+    public ResponseEntity<Object> verifyOtpRegister(HttpServletRequest request, @RequestBody OTPVerifDTO otpVerifDTO)
             throws Exception {
         // String sessionToken = request.getHeader("Token");
         HTTPCode httpCode = HTTPCode.OK;
@@ -128,8 +135,8 @@ public class AuthController {
                 Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByIdLogin(otpVerifDTO.getLoginId());
                 if (loginInfoOptional.isPresent()) {
                     LoginInfo loginInfo = loginInfoOptional.get();
-                    String fcmToken = otpService.verifyOTPReturnFcmToken(otpVerifDTO.getLoginId(),
-                            otpVerifDTO.getCode());
+                    String fcmToken = otpService.verifyOTPReturnFcmTokenEmail(otpVerifDTO.getLoginId(),
+                            otpVerifDTO.getCode(), true);
                     if (fcmToken != null) {
                         String token = authService.verifyLoginInfo(loginInfo, fcmToken);
                         EmailDetails email = new EmailDetails();
@@ -140,6 +147,51 @@ public class AuthController {
                                 "Terimakasih sudah bergabung dengan komunitas kami.");
                         emailService.sendEmail(email);
                         data = Map.of("token", token);
+                    } else {
+                        httpCode = HTTPCode.NOT_FOUND;
+                        data = new ErrorMessage(httpCode, "Verify OTP Gagal, OTP Tidak Valid");
+                    }
+                } else {
+                    httpCode = HTTPCode.NOT_FOUND;
+                    data = new ErrorMessage(httpCode, "Verify OTP Gagal, ID Login Tidak Ditemukan");
+                }
+            } else {
+                httpCode = HTTPCode.BAD_REQUEST;
+                data = new ErrorMessage(httpCode, "Verify OTP Gagal, Data TIdak Valid");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @PostMapping("/verifyOtp/changeEmail")
+    public ResponseEntity<Object> verifyOtpChangeEmail(HttpServletRequest request, @RequestBody OTPVerifDTO otpVerifDTO)
+            throws Exception {
+        // String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (otpVerifDTO.checkDTO()) {
+                Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByIdLogin(otpVerifDTO.getLoginId());
+                if (loginInfoOptional.isPresent()) {
+                    LoginInfo loginInfo = loginInfoOptional.get();
+                    String emailAddress = otpService.verifyOTPReturnFcmTokenEmail(otpVerifDTO.getLoginId(),
+                            otpVerifDTO.getCode(), false);
+                    if (emailAddress != null) {
+                        authService.changeEmailOTP(loginInfo, emailAddress);
+                        EmailDetails email = new EmailDetails();
+                        email.setRecipient(emailAddress);
+                        email.setSubject("Email Anda diganti");
+                        email.setMsgBody("Email Anda telah berhasil diganti");
+                        emailService.sendEmail(email);
+                        data = Map.of("email", emailAddress);
                     } else {
                         httpCode = HTTPCode.NOT_FOUND;
                         data = new ErrorMessage(httpCode, "Verify OTP Gagal, OTP Tidak Valid");
@@ -207,7 +259,7 @@ public class AuthController {
     }
 
     @PostMapping("/{idLogin}/changeEmail")
-    public ResponseEntity<Object> changeEmail(HttpServletRequest request, @RequestBody EmailDTO emailDTO,
+    public ResponseEntity<Object> changeEmailWithID(HttpServletRequest request, @RequestBody EmailDTO emailDTO,
             @PathVariable String idLogin)
             throws Exception {
         // String sessionToken = request.getHeader("Token");
@@ -217,11 +269,21 @@ public class AuthController {
                 Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByIdLogin(idLogin);
                 if (loginInfoOptional.isPresent()) {
                     LoginInfo loginInfo = loginInfoOptional.get();
-                    if (loginInfo.getVerifiedAt() != null) {
-                        httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
-                        data = new ErrorMessage(httpCode, "Akun Sudah Diverifikasi, Silakan Gunakan Fitur Lain");
-                    } else {
-                        if (authService.emailEditable(emailDTO.getEmail(), loginInfo)) {
+                    if (authService.emailEditable(emailDTO.getEmail(), loginInfo)
+                            && otpService.emailAvailable(emailDTO.getEmail())) {
+                        if (loginInfo.getVerifiedAt() != null) {
+                            OTP otp = otpService.generateOTP(loginInfo, false, emailDTO.getEmail());
+                            String code = otp.getCode();
+                            String expiryTime = otp.getExpiryTime().toString();
+                            EmailDetails email = new EmailDetails();
+                            email.setRecipient(emailDTO.getEmail());
+                            email.setSubject("Verifikasi Ganti Email");
+                            email.setMsgBody("Kode OTP Anda: " + code + "\n" +
+                                    "Berlaku selama 1 menit setelah anda menerima pesan ini\n" +
+                                    "Silakan masukkan kode ini untuk mengganti email Anda.");
+                            emailService.sendEmail(email);
+                            data = Map.of("loginId", loginInfo.getId(), "expiryTime", expiryTime);
+                        } else {
                             String editedEmail = authService.changeEmailOTP(loginInfo, emailDTO.getEmail());
                             Optional<OTP> otpOptional = otpService.refreshOTP(loginInfo);
                             if (otpOptional.isPresent()) {
@@ -240,14 +302,62 @@ public class AuthController {
                                 httpCode = HTTPCode.NOT_FOUND;
                                 data = new ErrorMessage(httpCode, "Ganti Email Registrasi Gagal, OTP Tidak Ditemukan");
                             }
-                        } else {
-                            httpCode = HTTPCode.CONFLICT;
-                            data = new ErrorMessage(httpCode, "Email Sudah Terdaftar");
                         }
+                    } else {
+                        httpCode = HTTPCode.CONFLICT;
+                        data = new ErrorMessage(httpCode, "Email Sudah Terdaftar");
                     }
                 } else {
                     httpCode = HTTPCode.NOT_FOUND;
                     data = new ErrorMessage(httpCode, "Gagal Mengganti Email, ID Login Tidak Ditemukan");
+                }
+            } else {
+                httpCode = HTTPCode.BAD_REQUEST;
+                data = new ErrorMessage(httpCode, "Pergantian Email Gagal, Data Tidak Valid");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @PostMapping("/changeEmail")
+    public ResponseEntity<Object> changeEmailWithToken(HttpServletRequest request, @RequestBody EmailDTO emailDTO)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (emailDTO.checkDTO()) {
+                Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByToken(sessionToken);
+                if (loginInfoOptional.isPresent()) {
+                    LoginInfo loginInfo = loginInfoOptional.get();
+                    if (authService.emailEditable(emailDTO.getEmail(), loginInfo)
+                            && otpService.emailAvailable(emailDTO.getEmail())) {
+                            OTP otp = otpService.generateOTP(loginInfo, false, emailDTO.getEmail());
+                            String code = otp.getCode();
+                            String expiryTime = otp.getExpiryTime().toString();
+                            EmailDetails email = new EmailDetails();
+                            email.setRecipient(emailDTO.getEmail());
+                            email.setSubject("Verifikasi Ganti Email");
+                            email.setMsgBody("Kode OTP Anda: " + code + "\n" +
+                                    "Berlaku selama 1 menit setelah anda menerima pesan ini\n" +
+                                    "Silakan masukkan kode ini untuk mengganti email Anda.");
+                            emailService.sendEmail(email);
+                            data = Map.of("loginId", loginInfo.getId(), "expiryTime", expiryTime);
+                    } else {
+                        httpCode = HTTPCode.CONFLICT;
+                        data = new ErrorMessage(httpCode, "Email Sudah Terdaftar");
+                    }
+                } else {
+                    httpCode = HTTPCode.NOT_FOUND;
+                    data = new ErrorMessage(httpCode, "Gagal Mengganti Email, Token Invalid");
                 }
             } else {
                 httpCode = HTTPCode.BAD_REQUEST;
