@@ -96,6 +96,14 @@ public class AuthService {
         return loginInfoRepository.findById(loginId);
     }
 
+    public Optional<LoginInfo> findLoginInfoByToken(String token) {
+        Optional<Session> sessionOptional = sessionRepository.findByToken(token);
+        if (sessionOptional.isPresent()) {
+            return Optional.of(sessionOptional.get().getIdLogin());
+        }
+        return Optional.empty();
+    }
+
     public Optional<LoginInfo> findLoginInfoByEmail(String email) {
         return loginInfoRepository.findByEmail(email);
     }
@@ -104,15 +112,15 @@ public class AuthService {
         loginInfo.setVerifiedAt(LocalDate.now());
         loginInfoRepository.save(loginInfo);
         String token = Base64.getEncoder()
-                        .encodeToString(passwordHasherMatcher.hashPassword(LocalDateTime.now().toString()).getBytes());
-                Session session = new Session();
-                session.setToken(token);
-                session.setIdLogin(loginInfo);
-                session.setFcmToken(fcmToken);
-                session.setLastActive(LocalDateTime.now());
-                session.setFirstLogin(LocalDateTime.now());
-                sessionRepository.save(session);
-                return token;
+                .encodeToString(passwordHasherMatcher.hashPassword(LocalDateTime.now().toString()).getBytes());
+        Session session = new Session();
+        session.setToken(token);
+        session.setIdLogin(loginInfo);
+        session.setFcmToken(fcmToken);
+        session.setLastActive(LocalDateTime.now());
+        session.setFirstLogin(LocalDateTime.now());
+        sessionRepository.save(session);
+        return token;
     }
 
     public String changeEmailOTP(LoginInfo loginInfo, String email) {
@@ -137,21 +145,21 @@ public class AuthService {
     }
 
     public Boolean emailEditable(String email, LoginInfo loginInfo) {
-        return loginInfo.getEmail().equalsIgnoreCase(email) || emailAvailable(email);
+        return !loginInfo.getEmail().equalsIgnoreCase(email) && emailAvailable(email);
     }
 
     @Transactional
     public Boolean deleteSession(String loginId) {
         Optional<LoginInfo> loginInfoOptional = findLoginInfoByIdLogin(loginId);
-        if(loginInfoOptional.isPresent()) {
+        if (loginInfoOptional.isPresent()) {
             LoginInfo loginInfo = loginInfoOptional.get();
-        Optional<Session> sessionOptional = sessionRepository.findByIdLogin(loginInfo);
-        if (sessionOptional.isPresent()) {
-            Session session = sessionOptional.get();
-            sessionRepository.delete(session);
-            return true;
+            Optional<Session> sessionOptional = sessionRepository.findByIdLogin(loginInfo);
+            if (sessionOptional.isPresent()) {
+                Session session = sessionOptional.get();
+                sessionRepository.delete(session);
+                return true;
+            }
         }
-    }
         return false;
     }
 }

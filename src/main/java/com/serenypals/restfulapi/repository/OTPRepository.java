@@ -8,4 +8,5 @@ import com.serenypals.restfulapi.model.LoginInfo;
 
 public interface OTPRepository extends JpaRepository<OTP, String> {
     Optional<OTP> findByIdLogin(LoginInfo loginInfo);
+    Boolean existsByFcmTokenEmail(String fcmTokenEmail);
 }
