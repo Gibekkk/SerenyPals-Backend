@@ -103,6 +103,19 @@ public class AuthService {
         return loginInfo;
     }
 
+    public LoginInfo editUser(UserDTO userDTO, LoginInfo loginInfo) {
+        loginInfo.setEditedAt(LocalDate.now());
+        loginInfoRepository.save(loginInfo);
+
+        User user = loginInfo.getIdUser();
+        user.setNama(userDTO.getNama());
+        user.setTanggalLahir(LocalDate.parse(userDTO.getTanggalLahir(), formatter));
+        user.setNomorTelepon(userDTO.getNomorTelepon());
+        userRepository.save(user);
+
+        return loginInfo;
+    }
+
     public Optional<Session> findSessionByIdLogin(LoginInfo loginInfo) {
         return sessionRepository.findByIdLogin(loginInfo);
     }
