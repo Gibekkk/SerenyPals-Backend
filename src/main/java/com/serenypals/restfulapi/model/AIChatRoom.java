@@ -1,7 +1,9 @@
 package com.serenypals.restfulapi.model;
 
 import java.time.LocalDate;
+import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
@@ -11,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.Setter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -44,4 +47,7 @@ public class AIChatRoom {
 
     @Column(name = "edited_at", nullable = false)
     private LocalDate editedAt;
+
+    @OneToMany(mappedBy = "idChatRoom", cascade = CascadeType.ALL)
+    private Set<AIChat> aiChats;
 }

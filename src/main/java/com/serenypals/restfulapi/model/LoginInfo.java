@@ -48,4 +48,13 @@ public class LoginInfo {
 
     @OneToOne(mappedBy = "idLogin", cascade = CascadeType.ALL)
     private User idUser;
+
+    @OneToOne(mappedBy = "idLogin", cascade = CascadeType.ALL)
+    private Session session;
+
+    @OneToOne(mappedBy = "idLogin", cascade = CascadeType.ALL)
+    private Psikolog idPsikolog;
+
+    @OneToOne(mappedBy = "idLogin", cascade = CascadeType.ALL)
+    private OTP otp;
 }

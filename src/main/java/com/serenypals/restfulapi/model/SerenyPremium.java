@@ -1,12 +1,15 @@
 package com.serenypals.restfulapi.model;
 
 import java.time.LocalDate;
+import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Setter;
 import lombok.AllArgsConstructor;
@@ -40,4 +43,10 @@ public class SerenyPremium {
 
     @Column(name = "deleted_at", nullable = true)
     private LocalDate deletedAt;
+    
+    @OneToMany(mappedBy = "idSerenyPremium", cascade = CascadeType.ALL)
+    private Set<PembelianSerenyPremium> serenyPremiumPurchases;
+    
+    @OneToMany(mappedBy = "idSerenyPremium", cascade = CascadeType.ALL)
+    private Set<SerenyPremiumUser> userSerenyPremiums;
 }
