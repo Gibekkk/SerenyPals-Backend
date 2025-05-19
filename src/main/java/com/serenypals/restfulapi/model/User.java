@@ -48,6 +48,39 @@ public class User {
     @OneToOne(mappedBy = "idUser", cascade = CascadeType.ALL)
     private UserInfo userInfo;
 
+    @OneToOne(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private SerenyPremiumUser userSerenyPremium;
+
     @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
-    private Set<UserTask> userTask;
+    private Set<UserTask> userTasks;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<AIChatRoom> aiChatRooms;
+    
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<PsikologChatRoom> chatRooms;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<BookingPsikolog> userBookings;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<CheckIn> userCheckIns;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<FavoriteTips> userFavoriteTips;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<MoodJournaling> userJournals;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<VirtualDiary> userDiaries;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<SharingForum> userForums;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<SharingForumComments> userForumComments;
+
+    @OneToMany(mappedBy = "idUser", cascade = CascadeType.ALL)
+    private Set<SharingForumLikes> userForumLikes;
 }
