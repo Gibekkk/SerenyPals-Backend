@@ -3,7 +3,6 @@ package com.serenypals.restfulapi.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -18,7 +17,6 @@ import com.serenypals.restfulapi.repository.UserInfoRepository;
 import com.serenypals.restfulapi.dto.LoginDTO;
 import com.serenypals.restfulapi.dto.UserDTO;
 import com.serenypals.restfulapi.model.LoginInfo;
-import com.serenypals.restfulapi.model.OTP;
 import com.serenypals.restfulapi.model.Session;
 import com.serenypals.restfulapi.model.User;
 import com.serenypals.restfulapi.model.UserInfo;
@@ -51,6 +49,9 @@ public class AuthService {
         if (loginInfoOptional.isPresent()) {
             LoginInfo loginInfo = loginInfoOptional.get();
             if (passwordHasherMatcher.matchPassword(loginDTO.getPassword(), loginInfo.getPassword())) {
+                Optional<Session> existingSession = findSessionByIdLogin(loginInfo);
+                if (existingSession.isPresent())
+                    logout(existingSession.get().getToken());
                 String token = Base64.getEncoder()
                         .encodeToString(passwordHasherMatcher.hashPassword(LocalDateTime.now().toString()).getBytes());
                 Session session = new Session();
@@ -90,6 +91,10 @@ public class AuthService {
         userInfoRepository.save(userInfo);
 
         return loginInfo;
+    }
+
+    public Optional<Session> findSessionByIdLogin(LoginInfo loginInfo) {
+        return sessionRepository.findByIdLogin(loginInfo);
     }
 
     public Optional<LoginInfo> findLoginInfoByIdLogin(String loginId) {

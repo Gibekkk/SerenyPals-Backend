@@ -2,16 +2,13 @@ package com.serenypals.restfulapi.service;
 
 import java.util.Optional;
 import java.util.Random;
-import java.util.Map;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.serenypals.restfulapi.model.OTP;
-import com.serenypals.restfulapi.model.User;
 import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.repository.OTPRepository;
 
@@ -63,6 +60,15 @@ public class OTPService {
             return Optional.of(otp);
         }
         return Optional.empty();
+    }
+
+    public Optional<OTP> findOTPByLoginInfo(LoginInfo loginInfo) {
+        return otpRepository.findByIdLogin(loginInfo);
+    }
+
+    @Transactional
+    public void deleteOTP(OTP otp) {
+        otpRepository.delete(otp);
     }
 
     @Transactional

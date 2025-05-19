@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,7 +46,7 @@ public class AuthController {
 
     private Object data = "";
 
-    @GetMapping("/login")
+    @PostMapping("/login")
     public ResponseEntity<Object> login(HttpServletRequest request, @RequestBody LoginDTO loginDTO) throws Exception {
         // String sessionToken = request.getHeader("Token");
         HTTPCode httpCode = HTTPCode.OK;
@@ -104,6 +105,41 @@ public class AuthController {
                     }
                     emailService.sendEmail(email);
                     data = Map.of("loginId", loginInfo.getId(), "expiryTime", expiryTime);
+                } else {
+                    httpCode = HTTPCode.NOT_FOUND;
+                    data = new ErrorMessage(httpCode, "Refresh OTP Gagal, OTP Tidak Ditemukan");
+                }
+            } else {
+                httpCode = HTTPCode.NOT_FOUND;
+                data = new ErrorMessage(httpCode, "Refresh OTP Gagal, ID Login Tidak Ditemukan");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @DeleteMapping("/{idLogin}")
+    public ResponseEntity<Object> deleteOTP(HttpServletRequest request, @PathVariable String idLogin)
+            throws Exception {
+        // String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            Optional<LoginInfo> loginInfoOptional = authService.findLoginInfoByIdLogin(idLogin);
+            if (loginInfoOptional.isPresent()) {
+                LoginInfo loginInfo = loginInfoOptional.get();
+                Optional<OTP> otpOptional = otpService.findOTPByLoginInfo(loginInfo);
+                if (otpOptional.isPresent()) {
+                    OTP otp = otpOptional.get();
+                    otpService.deleteOTP(otp);
+                    data = Map.of("status", "OTP Deleted");
                 } else {
                     httpCode = HTTPCode.NOT_FOUND;
                     data = new ErrorMessage(httpCode, "Refresh OTP Gagal, OTP Tidak Ditemukan");
