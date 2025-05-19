@@ -14,9 +14,11 @@ import com.serenypals.restfulapi.util.PasswordHasherMatcher;
 import com.serenypals.restfulapi.repository.LoginInfoRepository;
 import com.serenypals.restfulapi.repository.UserRepository;
 import com.serenypals.restfulapi.repository.UserInfoRepository;
+import com.serenypals.restfulapi.repository.SerenyPremiumUserRepository;
 import com.serenypals.restfulapi.dto.LoginDTO;
 import com.serenypals.restfulapi.dto.UserDTO;
 import com.serenypals.restfulapi.model.LoginInfo;
+import com.serenypals.restfulapi.model.SerenyPremiumUser;
 import com.serenypals.restfulapi.model.Session;
 import com.serenypals.restfulapi.model.User;
 import com.serenypals.restfulapi.model.UserInfo;
@@ -37,6 +39,9 @@ public class AuthService {
 
     @Autowired
     private UserInfoRepository userInfoRepository;
+
+    @Autowired
+    private SerenyPremiumUserRepository serenyPremiumUserRepository;
 
     @Autowired
     private PasswordHasherMatcher passwordHasherMatcher;
@@ -88,7 +93,12 @@ public class AuthService {
         userInfo.setIdUser(user);
         userInfo.setCoins(0);
         userInfo.setDiamonds(0);
-        userInfoRepository.save(userInfo);
+        user.setUserInfo(userInfoRepository.save(userInfo));
+
+        SerenyPremiumUser userSerenyPremium = new SerenyPremiumUser();
+        userSerenyPremium.setIdUser(user);
+        userSerenyPremium.setEndAt(LocalDate.now());
+        user.setUserSerenyPremium(serenyPremiumUserRepository.save(userSerenyPremium));
 
         return loginInfo;
     }
@@ -107,6 +117,32 @@ public class AuthService {
             return Optional.of(sessionOptional.get().getIdLogin());
         }
         return Optional.empty();
+    }
+
+    public Boolean isSessionAlive(String token) {
+        return findLoginInfoByToken(token).isPresent();
+    }
+
+    public Boolean isSessionUser(String token) {
+        if(isSessionAlive(token)) {
+            Optional<Session> sessionOptional = sessionRepository.findByToken(token);
+            if (sessionOptional.isPresent()) {
+                Session session = sessionOptional.get();
+                return session.getIdLogin().getIdUser() != null;
+            }
+        }
+        return false;
+    }
+
+    public Boolean isSessionPsikolog(String token) {
+        if(isSessionAlive(token)) {
+            Optional<Session> sessionOptional = sessionRepository.findByToken(token);
+            if (sessionOptional.isPresent()) {
+                Session session = sessionOptional.get();
+                return session.getIdLogin().getIdPsikolog() != null;
+            }
+        }
+        return false;
     }
 
     public Optional<LoginInfo> findLoginInfoByEmail(String email) {
