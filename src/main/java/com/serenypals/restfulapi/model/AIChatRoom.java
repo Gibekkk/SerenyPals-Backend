@@ -1,7 +1,13 @@
 package com.serenypals.restfulapi.model;
 
+import static org.junit.jupiter.api.DynamicTest.stream;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -50,4 +56,17 @@ public class AIChatRoom {
 
     @OneToMany(mappedBy = "idChatRoom", cascade = CascadeType.ALL)
     private Set<AIChat> aiChats;
+
+    public LocalDateTime getLastChatDateTime() {
+        return aiChats.stream()
+                .map(AIChat::getCreatedAt)
+                .max(LocalDateTime::compareTo).get();
+    }
+
+    public AIChat getLastChat() {
+        List<AIChat> aiChatList = aiChats.stream()
+                .sorted(Comparator.comparing(AIChat::getCreatedAt))
+                .collect(Collectors.toList());
+        return aiChatList.get(aiChatList.size() - 1);
+    }
 }

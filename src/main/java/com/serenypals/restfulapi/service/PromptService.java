@@ -40,15 +40,24 @@ public class PromptService {
     @Value("${storage.gemini-id}")
     private String geminiId;
 
-    private String geminiLink = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private final String GEMINI_MODEL = "gemini-2.0-flash";
+    private final String GEMINI_LINK = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL
+            + ":generateContent";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public String getLink() {
-        return geminiLink + "?key=" + geminiId;
+        return GEMINI_LINK + "?key=" + geminiId;
     }
 
     public Optional<AIChatRoom> findChatRoomById(String idChatRoom) {
         return aiChatRoomRepository.findById(idChatRoom);
+    }
+
+    public List<AIChatRoom> getChatRoomsByLoginInfo(LoginInfo loginInfo) {
+        return aiChatRoomRepository.findAll().stream()
+                .filter(chatRoom -> chatRoom.getIdUser().getIdLogin().equals(loginInfo))
+                .sorted(Comparator.comparing(AIChatRoom::getLastChatDateTime).reversed())
+                .collect(Collectors.toList());
     }
 
     public String renameChatRoom(AIChatRoom chatRoom, String newName) {
@@ -94,8 +103,22 @@ public class PromptService {
                 LocalDateTime.now()));
         List<Map<String, Object>> history = getHistory(chatRoom);
         String instructions = "Kamu adalah chatbot untuk menjadi psikolog yang baik bagi mahasiswa. Berikan saya konsultasi dari hasil chat ini, dan jadilah teman ngobrol saya. Saya ingin respon kamu bersih dan tidak memiliki tanda baca seperti bold, italic, new line, dan lain sebagainya.";
-        Map<String, Object> data = Map.of("model", "gemini-2.0-flash",
+        Map<String, Object> data = Map.of("model", GEMINI_MODEL,
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", instructions))),
+                "generationConfig", Map.of(
+                        "temperature", 0.7,
+                        "topK", 1,
+                        "topP", 1,
+                        "maxOutputTokens", 1024),
+                "safetySettings", List.of(
+                        Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+                        Map.of("category", "HARM_CATEGORY_HATE_SPEECH",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+                        Map.of("category", "HARM_CATEGORY_HARASSMENT",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+                        Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE")),
                 "contents", List.of(history, Map.of(
                         "role", "user",
                         "parts", List.of(Map.of("text", prompt)))));
@@ -135,14 +158,29 @@ public class PromptService {
     public String generateRoomName(AIChatRoom chatRoom) throws JsonProcessingException {
         int nameLimit = 255;
         List<Map<String, Object>> history = getHistory(chatRoom);
+        String prompt = "berikan saya nama room chat berdasarkan chat kita di atas dengan maksimal " + nameLimit
+                + " karakter";
         String instructions = "Berikan saya nama yang cocok untuk chat room ini berdasarkan chat yang ada, tidak perlu berikan apapun selain nama chat room saja tanpa ada respon lain";
-        Map<String, Object> data = Map.of("model", "gemini-2.5-pro-preview-05-06",
+        Map<String, Object> data = Map.of("model", GEMINI_MODEL,
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", instructions))),
+                "generationConfig", Map.of(
+                        "temperature", 0.7,
+                        "topK", 1,
+                        "topP", 1,
+                        "maxOutputTokens", 1024),
+                "safetySettings", List.of(
+                        Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+                        Map.of("category", "HARM_CATEGORY_HATE_SPEECH",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+                        Map.of("category", "HARM_CATEGORY_HARASSMENT",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+                        Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                "threshold", "BLOCK_MEDIUM_AND_ABOVE")),
                 "contents", List.of(history, Map.of(
                         "role", "user",
                         "parts", List.of(Map.of("text",
-                                "berikan saya nama room chat berdasarkan chat kita di atas dengan maksimal " + nameLimit
-                                        + " karakter")))));
+                                prompt)))));
 
         // Parsing Map to JSON body
         String jsonBody = mapper.writeValueAsString(data);
