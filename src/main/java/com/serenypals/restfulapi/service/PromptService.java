@@ -1,37 +1,17 @@
 package com.serenypals.restfulapi.service;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.concurrent.CompletableFuture;
 import java.util.Optional;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.serenypals.restfulapi.util.PasswordHasherMatcher;
-
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -46,6 +26,7 @@ import com.serenypals.restfulapi.repository.AIChatRoomRepository;
 import com.serenypals.restfulapi.model.AIChat;
 import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.model.AIChatRoom;
+import java.util.Comparator;
 
 @Service
 public class PromptService {
@@ -88,7 +69,11 @@ public class PromptService {
 
     public List<Map<String, Object>> getHistory(AIChatRoom chatRoom) {
         ArrayList<Map<String, Object>> history = new ArrayList<Map<String, Object>>();
-        for (AIChat chat : aiChatRepository.findAll()) {
+        List<AIChat> chatList = aiChatRepository.findAll().stream()
+                .sorted(Comparator.comparing(AIChat::getCreatedAt))
+                .collect(Collectors.toList());
+        Collections.reverse(chatList);
+        for (AIChat chat : chatList) {
             if (chat.getIdChatRoom().equals(chatRoom)) {
                 Map<String, Object> chatEntry = new HashMap<>();
                 chatEntry.put("role", chat.getIsBot() ? "assistant" : "user");
@@ -108,7 +93,7 @@ public class PromptService {
                 false,
                 LocalDateTime.now()));
         List<Map<String, Object>> history = getHistory(chatRoom);
-        String instructions = "Kamu adalah chatbot untuk menjadi psikolog yang baik bagi mahasiswa. Berikan saya konsultasi dari hasil chat ini";
+        String instructions = "Kamu adalah chatbot untuk menjadi psikolog yang baik bagi mahasiswa. Berikan saya konsultasi dari hasil chat ini, dan jadilah teman ngobrol saya. Saya ingin respon kamu bersih dan tidak memiliki tanda baca seperti bold, italic, new line, dan lain sebagainya.";
         Map<String, Object> data = Map.of("model", "gemini-2.0-flash",
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", instructions))),
                 "contents", List.of(history, Map.of(
@@ -133,8 +118,7 @@ public class PromptService {
                                                          // :contentReference[oaicite:2]{index=2}
             );
             // Output response
-            String responseBody = response.body().split("text")[1].substring(4).split("\"")[0];
-            responseBody = responseBody.substring(0, responseBody.length() - 2);
+            String responseBody = response.body().split("text")[1].substring(4).split("\"")[0].replace("\\n", "");
             aiChatRepository.save(new AIChat(
                     null,
                     chatRoom,
@@ -149,14 +133,16 @@ public class PromptService {
     }
 
     public String generateRoomName(AIChatRoom chatRoom) throws JsonProcessingException {
+        int nameLimit = 255;
         List<Map<String, Object>> history = getHistory(chatRoom);
-        String instructions = "Berikan saya nama yang cocok untuk chat room ini berdasarkan chat yang ada";
-        Map<String, Object> data = Map.of("model", "gemini-2.0-flash",
+        String instructions = "Berikan saya nama yang cocok untuk chat room ini berdasarkan chat yang ada, tidak perlu berikan apapun selain nama chat room saja tanpa ada respon lain";
+        Map<String, Object> data = Map.of("model", "gemini-2.5-pro-preview-05-06",
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", instructions))),
                 "contents", List.of(history, Map.of(
                         "role", "user",
                         "parts", List.of(Map.of("text",
-                                "berikan saya nama room chat berdasarkan chat kita di atas dengan maksimal 50 karakter")))));
+                                "berikan saya nama room chat berdasarkan chat kita di atas dengan maksimal " + nameLimit
+                                        + " karakter")))));
 
         // Parsing Map to JSON body
         String jsonBody = mapper.writeValueAsString(data);
@@ -176,8 +162,8 @@ public class PromptService {
                                                          // :contentReference[oaicite:2]{index=2}
             );
             // Output response
-            String responseBody = response.body().split("text")[1].substring(4).split("\"")[0];
-            return responseBody;
+            String responseBody = response.body().split("text")[1].substring(4).split("\"")[0].replace("\\n", "");
+            return responseBody.length() > nameLimit ? responseBody.substring(0, nameLimit) : responseBody;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
