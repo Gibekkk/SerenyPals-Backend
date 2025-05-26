@@ -93,7 +93,7 @@ public class PromptService {
                 false,
                 LocalDateTime.now()));
         List<Map<String, Object>> history = getHistory(chatRoom);
-        String instructions = "Kamu adalah chatbot untuk menjadi psikolog yang baik bagi mahasiswa. Berikan saya konsultasi dari hasil chat ini";
+        String instructions = "Kamu adalah chatbot untuk menjadi psikolog yang baik bagi mahasiswa. Berikan saya konsultasi dari hasil chat ini, dan jadilah teman ngobrol saya. Saya ingin respon kamu bersih dan tidak memiliki tanda baca seperti bold, italic, new line, dan lain sebagainya.";
         Map<String, Object> data = Map.of("model", "gemini-2.0-flash",
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", instructions))),
                 "contents", List.of(history, Map.of(
@@ -163,7 +163,6 @@ public class PromptService {
             );
             // Output response
             String responseBody = response.body().split("text")[1].substring(4).split("\"")[0].replace("\\n", "");
-            System.out.println(responseBody);
             return responseBody.length() > nameLimit ? responseBody.substring(0, nameLimit) : responseBody;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
