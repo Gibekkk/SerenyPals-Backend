@@ -53,6 +53,11 @@ public class PromptService {
         return aiChatRoomRepository.findById(idChatRoom);
     }
 
+    public void deleteChatRoomById(AIChatRoom chatRoom) {
+        chatRoom.setDeletedAt(LocalDate.now());
+        aiChatRoomRepository.save(chatRoom);
+    }
+
     public List<AIChatRoom> getChatRoomsByLoginInfo(LoginInfo loginInfo) {
         return aiChatRoomRepository.findAll().stream()
                 .filter(chatRoom -> chatRoom.getIdUser().getIdLogin().equals(loginInfo))

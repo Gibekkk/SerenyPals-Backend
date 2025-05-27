@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -58,6 +59,50 @@ public class PromptController {
                                     "chatRoomId", chatRoom.getId(),
                                     "chatRoomName", chatRoom.getJudulChat(),
                                     "chatHistory", promptService.getHistory(chatRoom));
+                        } else {
+                            httpCode = HTTPCode.FORBIDDEN;
+                            data = new ErrorMessage(httpCode, "Anda Tidak Memiliki Akses Ke Chat Room Ini");
+                        }
+                    } else {
+                        httpCode = HTTPCode.NOT_FOUND;
+                        data = new ErrorMessage(httpCode, "Chat Room Tidak Ditemukan");
+                    }
+                } else {
+                    httpCode = HTTPCode.FORBIDDEN;
+                    data = new ErrorMessage(httpCode, "Akses Anda Ditolak Untuk Fitur Ini");
+                }
+            } else {
+                httpCode = HTTPCode.UNAUTHORIZED;
+                data = new ErrorMessage(httpCode, "Session Token Tidak Valid, Mohon Melakukan Login Kembali");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @DeleteMapping("/{chatRoomId}")
+    public ResponseEntity<Object> deleteChat(HttpServletRequest request, @PathVariable String chatRoomId)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (authService.isSessionAlive(sessionToken)) {
+                if (authService.isSessionUser(sessionToken)) {
+                    LoginInfo loginInfo = authService.findLoginInfoByToken(sessionToken).get();
+                    Optional<AIChatRoom> optionalRoom = promptService.findChatRoomById(chatRoomId);
+                    if (optionalRoom.isPresent()) {
+                        AIChatRoom chatRoom = optionalRoom.get();
+                        if (chatRoom.getIdUser().getIdLogin().equals(loginInfo)) {
+                            promptService.deleteChatRoomById(chatRoom);
+                            data = data = Map.of("Status", "Chat Room Berhasil Dihapus");
                         } else {
                             httpCode = HTTPCode.FORBIDDEN;
                             data = new ErrorMessage(httpCode, "Anda Tidak Memiliki Akses Ke Chat Room Ini");
