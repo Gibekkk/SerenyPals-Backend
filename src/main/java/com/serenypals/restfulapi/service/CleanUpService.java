@@ -22,6 +22,12 @@ public class CleanUpService {
     private AIChatRoomRepository aiChatRoomRepository;
     
     @Autowired
+    private PsikologChatRoomRepository psikologChatRoomRepository;
+    
+    @Autowired
+    private BookingPsikologRepository bookingPsikologRepository;
+    
+    @Autowired
     private AuthService authService;
 
     private int deleteDays = 30;
@@ -37,10 +43,27 @@ public class CleanUpService {
     }
 
     @Transactional
-    public void cleanChatRoom() {
+    public void cleanBooking() {
+        for(BookingPsikolog bookingPsikolog : bookingPsikologRepository.findAll()){
+            if(inDeletion(bookingPsikolog.getDeletedAt())) {
+                bookingPsikologRepository.delete(bookingPsikolog);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanPsikologChatRoom() {
+        for(PsikologChatRoom psikologChatRoom : psikologChatRoomRepository.findAll()){
+            if(inDeletion(psikologChatRoom.getDeletedAt())) {
+                psikologChatRoomRepository.delete(psikologChatRoom);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanAIChatRoom() {
         for(AIChatRoom aiChatRoom : aiChatRoomRepository.findAll()){
             if(inDeletion(aiChatRoom.getDeletedAt())) {
-                authService.deleteSession(aiChatRoom.getId());
                 aiChatRoomRepository.delete(aiChatRoom);
             }
         }
@@ -65,6 +88,8 @@ public class CleanUpService {
     @Transactional
     public void fullClean() {
         cleanLoginInfo();
-        cleanChatRoom();
+        cleanAIChatRoom();
+        cleanPsikologChatRoom();
+        cleanBooking();
     }
 }
