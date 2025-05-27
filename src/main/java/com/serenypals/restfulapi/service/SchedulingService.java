@@ -7,8 +7,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Service
 public class SchedulingService {
     @Autowired
-    private OTPService otpService; @Scheduled(fixedRate = 5000)
-    public void sendNotifications() {
+    private OTPService otpService; 
+
+    @Autowired
+    private CleanUpService cleanUpService; 
+
+    @Scheduled(fixedRate = 5000)
+    public void clearRedundantData() {
         otpService.clearRedundantOTP();
+        cleanUpService.fullClean();
     }
 }

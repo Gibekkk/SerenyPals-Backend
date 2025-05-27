@@ -19,10 +19,10 @@ public class CleanUpService {
     private LoginInfoRepository loginInfoRepository;
     
     @Autowired
-    private AuthService authService;
-
+    private AIChatRoomRepository aiChatRoomRepository;
+    
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     private int deleteDays = 30;
     private LocalDate today = LocalDate.now();
@@ -33,19 +33,28 @@ public class CleanUpService {
     }
 
     private boolean inDeletion(LocalDate deletedAt) {
-        return compareDate(deletedAt) >= deleteDays;
+        return deletedAt != null ? compareDate(deletedAt) >= deleteDays : false;
     }
 
-    // @Transactional
-    // public void cleanUser() {
-    //     for(User user : userRepository.findAll()){
-    //         if(user.getIsDeleted() && inDeletion(user.getDeletedAt())) {
-    //             userService.deleteProfilePictureById(user.getId());
-    //             loginService.deleteSessionByUser(user.getId());
-    //             userRepository.delete(user);
-    //         }
-    //     }
-    // }
+    @Transactional
+    public void cleanChatRoom() {
+        for(AIChatRoom aiChatRoom : aiChatRoomRepository.findAll()){
+            if(inDeletion(aiChatRoom.getDeletedAt())) {
+                authService.deleteSession(aiChatRoom.getId());
+                aiChatRoomRepository.delete(aiChatRoom);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanLoginInfo() {
+        for(LoginInfo loginInfo : loginInfoRepository.findAll()){
+            if(inDeletion(loginInfo.getDeletedAt())) {
+                authService.deleteSession(loginInfo.getId());
+                loginInfoRepository.delete(loginInfo);
+            }
+        }
+    }
 
     @Transactional
     public void cleanLoginInfo(LoginInfo loginInfo) {
@@ -55,6 +64,7 @@ public class CleanUpService {
 
     @Transactional
     public void fullClean() {
-        // cleanUser();
+        cleanLoginInfo();
+        cleanChatRoom();
     }
 }
