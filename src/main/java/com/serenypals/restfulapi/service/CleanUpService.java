@@ -28,6 +28,18 @@ public class CleanUpService {
     private BookingPsikologRepository bookingPsikologRepository;
     
     @Autowired
+    private SharingForumRepository sharingForumRepository;
+    
+    @Autowired
+    private SharingForumCommentsRepository sharingForumCommentsRepository;
+    
+    @Autowired
+    private VirtualDiaryRepository virtualDiaryRepository;
+    
+    @Autowired
+    private TipsRepository tipsRepository;
+    
+    @Autowired
     private AuthService authService;
 
     private int deleteDays = 30;
@@ -40,6 +52,42 @@ public class CleanUpService {
 
     private boolean inDeletion(LocalDate deletedAt) {
         return deletedAt != null ? compareDate(deletedAt) >= deleteDays : false;
+    }
+
+    @Transactional
+    public void cleanForum() {
+        for(SharingForum sharingForum : sharingForumRepository.findAll()){
+            if(inDeletion(sharingForum.getDeletedAt())) {
+                sharingForumRepository.delete(sharingForum);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanDiaries() {
+        for(VirtualDiary virtualDiary : virtualDiaryRepository.findAll()){
+            if(inDeletion(virtualDiary.getDeletedAt())) {
+                virtualDiaryRepository.delete(virtualDiary);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanTips() {
+        for(Tips tips : tipsRepository.findAll()){
+            if(inDeletion(tips.getDeletedAt())) {
+                tipsRepository.delete(tips);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanForumComments() {
+        for(SharingForumComments sharingForumComments : sharingForumCommentsRepository.findAll()){
+            if(inDeletion(sharingForumComments.getDeletedAt())) {
+                sharingForumCommentsRepository.delete(sharingForumComments);
+            }
+        }
     }
 
     @Transactional
@@ -91,5 +139,6 @@ public class CleanUpService {
         cleanAIChatRoom();
         cleanPsikologChatRoom();
         cleanBooking();
+        cleanForum();
     }
 }

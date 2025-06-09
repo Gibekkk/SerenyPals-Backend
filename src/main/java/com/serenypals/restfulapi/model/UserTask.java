@@ -43,7 +43,7 @@ public class UserTask {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "taskStatus", nullable = false)
-    private TaskStatus tasStatus;
+    private TaskStatus taskStatus;
 
     @Column(name = "completed_at", nullable = true)
     private LocalDate completedAt;
