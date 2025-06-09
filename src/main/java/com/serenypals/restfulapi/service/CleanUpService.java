@@ -19,10 +19,28 @@ public class CleanUpService {
     private LoginInfoRepository loginInfoRepository;
     
     @Autowired
-    private AuthService authService;
-
+    private AIChatRoomRepository aiChatRoomRepository;
+    
     @Autowired
-    private UserService userService;
+    private PsikologChatRoomRepository psikologChatRoomRepository;
+    
+    @Autowired
+    private BookingPsikologRepository bookingPsikologRepository;
+    
+    @Autowired
+    private SharingForumRepository sharingForumRepository;
+    
+    @Autowired
+    private SharingForumCommentsRepository sharingForumCommentsRepository;
+    
+    @Autowired
+    private VirtualDiaryRepository virtualDiaryRepository;
+    
+    @Autowired
+    private TipsRepository tipsRepository;
+    
+    @Autowired
+    private AuthService authService;
 
     private int deleteDays = 30;
     private LocalDate today = LocalDate.now();
@@ -33,19 +51,81 @@ public class CleanUpService {
     }
 
     private boolean inDeletion(LocalDate deletedAt) {
-        return compareDate(deletedAt) >= deleteDays;
+        return deletedAt != null ? compareDate(deletedAt) >= deleteDays : false;
     }
 
-    // @Transactional
-    // public void cleanUser() {
-    //     for(User user : userRepository.findAll()){
-    //         if(user.getIsDeleted() && inDeletion(user.getDeletedAt())) {
-    //             userService.deleteProfilePictureById(user.getId());
-    //             loginService.deleteSessionByUser(user.getId());
-    //             userRepository.delete(user);
-    //         }
-    //     }
-    // }
+    @Transactional
+    public void cleanForum() {
+        for(SharingForum sharingForum : sharingForumRepository.findAll()){
+            if(inDeletion(sharingForum.getDeletedAt())) {
+                sharingForumRepository.delete(sharingForum);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanDiaries() {
+        for(VirtualDiary virtualDiary : virtualDiaryRepository.findAll()){
+            if(inDeletion(virtualDiary.getDeletedAt())) {
+                virtualDiaryRepository.delete(virtualDiary);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanTips() {
+        for(Tips tips : tipsRepository.findAll()){
+            if(inDeletion(tips.getDeletedAt())) {
+                tipsRepository.delete(tips);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanForumComments() {
+        for(SharingForumComments sharingForumComments : sharingForumCommentsRepository.findAll()){
+            if(inDeletion(sharingForumComments.getDeletedAt())) {
+                sharingForumCommentsRepository.delete(sharingForumComments);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanBooking() {
+        for(BookingPsikolog bookingPsikolog : bookingPsikologRepository.findAll()){
+            if(inDeletion(bookingPsikolog.getDeletedAt())) {
+                bookingPsikologRepository.delete(bookingPsikolog);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanPsikologChatRoom() {
+        for(PsikologChatRoom psikologChatRoom : psikologChatRoomRepository.findAll()){
+            if(inDeletion(psikologChatRoom.getDeletedAt())) {
+                psikologChatRoomRepository.delete(psikologChatRoom);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanAIChatRoom() {
+        for(AIChatRoom aiChatRoom : aiChatRoomRepository.findAll()){
+            if(inDeletion(aiChatRoom.getDeletedAt())) {
+                aiChatRoomRepository.delete(aiChatRoom);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanLoginInfo() {
+        for(LoginInfo loginInfo : loginInfoRepository.findAll()){
+            if(inDeletion(loginInfo.getDeletedAt())) {
+                authService.deleteSession(loginInfo.getId());
+                loginInfoRepository.delete(loginInfo);
+            }
+        }
+    }
 
     @Transactional
     public void cleanLoginInfo(LoginInfo loginInfo) {
@@ -55,6 +135,10 @@ public class CleanUpService {
 
     @Transactional
     public void fullClean() {
-        // cleanUser();
+        cleanLoginInfo();
+        cleanAIChatRoom();
+        cleanPsikologChatRoom();
+        cleanBooking();
+        cleanForum();
     }
 }

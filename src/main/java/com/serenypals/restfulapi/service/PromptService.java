@@ -50,7 +50,7 @@ public class PromptService {
     }
 
     public Optional<AIChatRoom> findChatRoomById(String idChatRoom) {
-        return aiChatRoomRepository.findById(idChatRoom);
+        return aiChatRoomRepository.findById(idChatRoom).filter(f -> f.getDeletedAt() == null);
     }
 
     public void deleteChatRoomById(AIChatRoom chatRoom) {
@@ -60,6 +60,7 @@ public class PromptService {
 
     public List<AIChatRoom> getChatRoomsByLoginInfo(LoginInfo loginInfo) {
         return aiChatRoomRepository.findAll().stream()
+                .filter(chatRoom -> chatRoom.getDeletedAt() == null)
                 .filter(chatRoom -> chatRoom.getIdUser().getIdLogin().equals(loginInfo))
                 .sorted(Comparator.comparing(AIChatRoom::getLastChatDateTime).reversed())
                 .collect(Collectors.toList());

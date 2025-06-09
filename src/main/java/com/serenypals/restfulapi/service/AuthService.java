@@ -50,7 +50,7 @@ public class AuthService {
             .ofPattern("yyyy-MM-dd");
 
     public String login(LoginDTO loginDTO) {
-        Optional<LoginInfo> loginInfoOptional = loginInfoRepository.findByEmail(loginDTO.getEmail());
+        Optional<LoginInfo> loginInfoOptional = findLoginInfoByEmail(loginDTO.getEmail());
         if (loginInfoOptional.isPresent()) {
             LoginInfo loginInfo = loginInfoOptional.get();
             if (passwordHasherMatcher.matchPassword(loginDTO.getPassword(), loginInfo.getPassword())) {
@@ -121,7 +121,7 @@ public class AuthService {
     }
 
     public Optional<LoginInfo> findLoginInfoByIdLogin(String loginId) {
-        return loginInfoRepository.findById(loginId);
+        return loginInfoRepository.findById(loginId).filter(f -> f.getDeletedAt() == null);
     }
 
     public Optional<LoginInfo> findLoginInfoByToken(String token) {
@@ -159,7 +159,7 @@ public class AuthService {
     }
 
     public Optional<LoginInfo> findLoginInfoByEmail(String email) {
-        return loginInfoRepository.findByEmail(email);
+        return loginInfoRepository.findByEmail(email).filter(f -> f.getDeletedAt() == null);
     }
 
     public String verifyLoginInfo(LoginInfo loginInfo, String fcmToken) {
