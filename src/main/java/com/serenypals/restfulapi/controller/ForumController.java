@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.serenypals.restfulapi.model.User;
 import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.model.SharingForum;
-import com.serenypals.restfulapi.dto.UserDTO;
+import com.serenypals.restfulapi.dto.ForumDTO;
 import com.serenypals.restfulapi.service.AuthService;
 import com.serenypals.restfulapi.service.SharingForumService;
 import com.serenypals.restfulapi.util.ErrorMessage;
@@ -43,6 +43,58 @@ public class ForumController {
     private SharingForumService sharingForumService;
 
     private Object data = "";
+
+    @PostMapping
+    public ResponseEntity<Object> createNewForum(HttpServletRequest request, @RequestBody ForumDTO forumDTO)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if(forumDTO.checkDTO()){
+            if (authService.isSessionAlive(sessionToken)) {
+                if (authService.isSessionUser(sessionToken)) {
+                    User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser()
+                    if (sharingForumService.isContentSafe(forumDTO.getContent()) || sharingForumService.isContentSafe(forumDTO.getJudul())) {
+                        SharingForum newForum = sharingForumService.createForum(forumDTO, user)
+                        data = Map.of(
+                                    "id", newForum.getId(),
+                                    "userId", newForum.getIdUser().getId(),
+                                    "judul", newForum.getJudul(),
+                                    "content", newForum.getContent(),
+                                    "createdAt", newForum.getCreatedAt().toString(),
+                                    "editedAt", newForum.getEditedAt().toString(),
+                                    "likeCount", newForum.getLikeCount(),
+                                    "commentCount", newForum.getCommentCount(),
+                                    "isSelfForum", newForum.getIdUser() == user
+                            );
+                    } else {
+                        httpCode = HTTPCode.FORBIDDEN;
+                        data = new ErrorMessage(httpCode, "Konten Forum Tidak Sopan dan Mungkin Bisa Menyinggung Seseorang");
+                    }
+                } else {
+                    httpCode = HTTPCode.FORBIDDEN;
+                    data = new ErrorMessage(httpCode, "Akses Anda Ditolak Untuk Fitur Ini");
+                }
+            } else {
+                httpCode = HTTPCode.UNAUTHORIZED;
+                data = new ErrorMessage(httpCode, "Session Token Tidak Valid, Mohon Melakukan Login Kembali");
+            }
+        } else {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, "Data Forum Tidak Valid");
+        }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
 
     @GetMapping
     public ResponseEntity<Object> getAllForum(HttpServletRequest request)
