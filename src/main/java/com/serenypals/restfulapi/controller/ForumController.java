@@ -53,9 +53,9 @@ public class ForumController {
             if(forumDTO.checkDTO()){
             if (authService.isSessionAlive(sessionToken)) {
                 if (authService.isSessionUser(sessionToken)) {
-                    User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser()
+                    User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser();
                     if (sharingForumService.isContentSafe(forumDTO.getContent()) || sharingForumService.isContentSafe(forumDTO.getJudul())) {
-                        SharingForum newForum = sharingForumService.createForum(forumDTO, user)
+                        SharingForum newForum = sharingForumService.createForum(forumDTO, user);
                         data = Map.of(
                                     "id", newForum.getId(),
                                     "userId", newForum.getIdUser().getId(),

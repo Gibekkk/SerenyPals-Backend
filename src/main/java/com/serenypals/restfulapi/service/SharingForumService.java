@@ -47,7 +47,7 @@ public class SharingForumService {
     }
 
     public boolean isContentSafe(String content) throws JsonProcessingException {
-        return promptService.checkPoliteness(content);
+        return promptService.isPolite(content);
     }
 
     public SharingForum createForum(ForumDTO forumDTO, User user) {

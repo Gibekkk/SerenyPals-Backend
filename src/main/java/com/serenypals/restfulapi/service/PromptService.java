@@ -100,7 +100,7 @@ public class PromptService {
         return result;
     }
 
-    public Boolean idPolite(String prompt) throws JsonProcessingException {
+    public Boolean isPolite(String prompt) throws JsonProcessingException {
         String instructions = "Kamu adalah chatbot untuk menjadi administrator yang teliti dan disiplin. Periksa teks yang saya berikan apakah teks tersebut sopan dan ramah atau tidak dari setiap bahasa yang ada, dan periksa juga kata singkatan dan segalanya. Saya ingin teks tersebut tidak memiliki kemungkinan sedikit pun untuk menyinggung seseorang dari segi apapun. Berikan respon 'TRUE' jika sopan dan respon 'FALSE' jika tidak. Saya ingin respon kamu bersih dan tidak memiliki tanda baca seperti bold, italic, new line, dan lain sebagainya. Respon yang saya minta hanya berisi 1 kata sesuai instruksi sebelumnya.";
         Map<String, Object> data = Map.of("model", GEMINI_MODEL,
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", instructions))),
@@ -145,7 +145,7 @@ public class PromptService {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        return "";
+        return false;
     }
 
     public String sendPrompt(String prompt, AIChatRoom chatRoom) throws JsonProcessingException {
