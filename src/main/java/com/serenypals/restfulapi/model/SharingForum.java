@@ -1,6 +1,7 @@
 package com.serenypals.restfulapi.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -46,14 +47,22 @@ public class SharingForum {
     private LocalDate deletedAt;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "edited_at", nullable = false)
-    private LocalDate editedAt;
+    private LocalDateTime editedAt;
     
     @OneToMany(mappedBy = "idForum", cascade = CascadeType.ALL)
     private Set<SharingForumComments> sharingForumComments;
     
     @OneToMany(mappedBy = "idForum", cascade = CascadeType.ALL)
     private Set<SharingForumLikes> sharingForumLikes;
+
+    public int getLikeCount() {
+        return sharingForumLikes != null ? sharingForumLikes.size() : 0;
+    }
+
+    public int getCommentCount() {
+        return sharingForumComments != null ? sharingForumComments.size() : 0;
+    }
 }

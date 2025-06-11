@@ -76,11 +76,7 @@ public class OTPService {
         Optional<OTP> existingOtp = otpRepository.findByIdLogin(loginInfo);
         if (existingOtp.isPresent()) {
             OTP otp = existingOtp.get();
-            boolean isRegistration = otp.getIsRegistration();
             otpRepository.delete(otp);
-            if (isRegistration) {
-                cleanUpService.cleanLoginInfo(loginInfo);
-            }
         }
     }
 

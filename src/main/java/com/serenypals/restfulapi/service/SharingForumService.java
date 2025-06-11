@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import com.serenypals.restfulapi.repository.SharingForumRepository;
 import com.serenypals.restfulapi.repository.SharingForumCommentsRepository;
 import com.serenypals.restfulapi.model.SharingForum;
+import com.serenypals.restfulapi.model.SharingForumComments;
+import com.serenypals.restfulapi.model.SharingForumLikes;
 import com.serenypals.restfulapi.model.LoginInfo;
 
 @Service
@@ -28,6 +30,12 @@ public class SharingForumService {
         return sharingForumRepository.findAll().stream()
                 .filter(forum -> forum.getDeletedAt() == null)
                 .filter(forum -> forum.getIdUser().getIdLogin().equals(loginInfo))
+                .collect(Collectors.toList());
+    }
+
+    public List<SharingForum> findAllForums() {
+        return sharingForumRepository.findAll().stream()
+                .filter(forum -> forum.getDeletedAt() == null)
                 .collect(Collectors.toList());
     }
 
