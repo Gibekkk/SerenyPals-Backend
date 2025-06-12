@@ -12,31 +12,26 @@ import com.serenypals.restfulapi.model.OTP;
 import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.repository.OTPRepository;
 
-import jakarta.transaction.Transactional;
-
 @Service
 public class OTPService {
 
     @Autowired
     private OTPRepository otpRepository;
 
-    @Autowired
-    private CleanUpService cleanUpService;
-
     private int OTP_LENGTH = 6;
-    private int OTP_TIME_OUT = 1;
-    private int OTP_DELETION = 30;
+    private int OTP_TIME_OUT = 3;
 
     // Generate dan simpan OTP
     public OTP generateOTP(LoginInfo loginInfo, boolean isRegistration, String fcmTokenEmail) {
         clearExistingOTP(loginInfo);
         String code = String.format("%0" + OTP_LENGTH + "d", new Random().nextInt(999_999));
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(OTP_TIME_OUT);
-        OTP otp = new OTP();
-        otp.setId(null);
+        Optional<OTP> optionalOTP = findOTPByLoginInfo(loginInfo);
+        OTP otp = optionalOTP.isPresent() ? optionalOTP.get() : new OTP();
         otp.setCode(code);
         otp.setExpiryTime(expiry);
         otp.setIsRegistration(isRegistration);
+        otp.setIsDeleted(false);
         otp.setIdLogin(loginInfo);
         otp.setFcmTokenEmail(fcmTokenEmail);
         otpRepository.save(otp);
@@ -66,32 +61,16 @@ public class OTPService {
         return otpRepository.findByIdLogin(loginInfo);
     }
 
-    @Transactional
     public void deleteOTP(OTP otp) {
-        otpRepository.delete(otp);
+        otp.setIsDeleted(true);
+        otpRepository.save(otp);
     }
 
-    @Transactional
     public void clearExistingOTP(LoginInfo loginInfo) {
         Optional<OTP> existingOtp = otpRepository.findByIdLogin(loginInfo);
         if (existingOtp.isPresent()) {
             OTP otp = existingOtp.get();
-            otpRepository.delete(otp);
-        }
-    }
-
-    @Transactional
-    public void clearRedundantOTP() {
-        List<OTP> otps = otpRepository.findAll();
-        for (OTP otp : otps) {
-            if (otp.getExpiryTime().plusMinutes(OTP_DELETION).isBefore(LocalDateTime.now())) {
-                boolean isRegistration = otp.getIsRegistration();
-                LoginInfo loginInfo = otp.getIdLogin();
-                otpRepository.delete(otp);
-                if (isRegistration) {
-                    cleanUpService.cleanLoginInfo(loginInfo);
-                }
-            }
+            deleteOTP(otp);
         }
     }
 
@@ -100,21 +79,19 @@ public class OTPService {
                 && !otp.getExpiryTime().isBefore(LocalDateTime.now());
     }
 
-    @Transactional
     public boolean verifyOTP(String loginId, String code, Boolean isRegistration) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
             if (checkOTP(otp, loginId, code)) {
                 if ((isRegistration && !otp.getIsRegistration()) || (!isRegistration && otp.getIsRegistration()))
                     return false;
-                otpRepository.delete(otp);
+                deleteOTP(otp);
                 return true;
             }
         }
         return false;
     }
 
-    @Transactional
     public String verifyOTPReturnFcmTokenEmail(String loginId, String code, Boolean isRegistration) {
         List<OTP> otps = otpRepository.findAll();
         for (OTP otp : otps) {
@@ -122,7 +99,7 @@ public class OTPService {
                 if ((isRegistration && !otp.getIsRegistration()) || (!isRegistration && otp.getIsRegistration()))
                     return null;
                 String fcmToken = otp.getFcmTokenEmail();
-                otpRepository.delete(otp);
+                deleteOTP(otp);
                 return fcmToken;
             }
         }

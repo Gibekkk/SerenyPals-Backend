@@ -28,7 +28,7 @@ public class ForumDTO {
                 .map(s -> s.length() <= 255)
                 .orElse(true);
         boolean content = Optional.ofNullable(this.content)
-                .map(s -> s.length() <= 255)
+                .map(s -> s.length() <= 65535)
                 .orElse(true);
 
         if (!judul)

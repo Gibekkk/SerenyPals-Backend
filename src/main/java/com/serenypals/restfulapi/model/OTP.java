@@ -41,6 +41,9 @@ public class OTP {
     @Column(name = "is_registration", nullable = false)
     private Boolean isRegistration;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted;
+
     @OneToOne
     @JoinColumn(nullable = false, name = "id_login", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_otp_login"))
     private LoginInfo idLogin;

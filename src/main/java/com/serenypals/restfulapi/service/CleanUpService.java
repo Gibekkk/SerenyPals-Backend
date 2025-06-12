@@ -1,7 +1,9 @@
 package com.serenypals.restfulapi.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,10 +42,14 @@ public class CleanUpService {
     private TipsRepository tipsRepository;
     
     @Autowired
+    private OTPRepository otpRepository;
+    
+    @Autowired
     private AuthService authService;
 
     private int deleteDays = 30;
     private LocalDate today = LocalDate.now();
+    private int OTP_DELETION = 30;
 
     private int compareDate(LocalDate deletedAt) {
         int daysElapsed = (int) ChronoUnit.DAYS.between(deletedAt, today);
@@ -77,6 +83,15 @@ public class CleanUpService {
         for(Tips tips : tipsRepository.findAll()){
             if(inDeletion(tips.getDeletedAt())) {
                 tipsRepository.delete(tips);
+            }
+        }
+    }
+
+    @Transactional
+    public void cleanForumLikes() {
+        for(SharingForumLikes sharingForumLikes : sharingForumLikesRepository.findAll()){
+            if(sharingForumLikes.getIsDeleted()) {
+                sharingForumLikesRepository.delete(sharingForumLikes);
             }
         }
     }
@@ -134,11 +149,32 @@ public class CleanUpService {
     }
 
     @Transactional
+    public void cleanOTP(OTP otp) {
+        otpRepository.delete(otp);
+    }
+
+    @Transactional
+    public void cleanOTP() {
+        List<OTP> otps = otpRepository.findAll();
+        for (OTP otp : otps) {
+            if (otp.getExpiryTime().plusMinutes(OTP_DELETION).isBefore(LocalDateTime.now()) || otp.getIsDeleted()) {
+                boolean isRegistration = otp.getIsRegistration();
+                LoginInfo loginInfo = otp.getIdLogin();
+                otpRepository.delete(otp);
+                if (isRegistration && loginInfo.getVerifiedAt() == null) {
+                    cleanLoginInfo(loginInfo);
+                }
+            }
+        }
+    }
+
+    @Transactional
     public void fullClean() {
         cleanLoginInfo();
         cleanAIChatRoom();
         cleanPsikologChatRoom();
         cleanBooking();
         cleanForum();
+        cleanOTP();
     }
 }

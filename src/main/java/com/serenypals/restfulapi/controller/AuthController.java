@@ -142,11 +142,11 @@ public class AuthController {
                     data = Map.of("status", "OTP Deleted");
                 } else {
                     httpCode = HTTPCode.NOT_FOUND;
-                    data = new ErrorMessage(httpCode, "Refresh OTP Gagal, OTP Tidak Ditemukan");
+                    data = new ErrorMessage(httpCode, "Delete OTP Gagal, OTP Tidak Ditemukan");
                 }
             } else {
                 httpCode = HTTPCode.NOT_FOUND;
-                data = new ErrorMessage(httpCode, "Refresh OTP Gagal, ID Login Tidak Ditemukan");
+                data = new ErrorMessage(httpCode, "Delete OTP Gagal, ID Login Tidak Ditemukan");
             }
         } catch (IllegalArgumentException e) {
             httpCode = HTTPCode.BAD_REQUEST;
