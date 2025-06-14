@@ -37,6 +37,9 @@ public class SharingForumService {
     @Autowired
     private PromptService promptService;
 
+    @Autowired
+    private CleanUpService cleanUpService;
+
     public Optional<SharingForum> findForumById(String id) {
         return sharingForumRepository.findById(id).filter(f -> f.getDeletedAt() == null);
     }
@@ -81,16 +84,14 @@ public class SharingForumService {
     }
 
     public SharingForum toggleLikeForum(SharingForum forum, User user) {
-        SharingForumLikes sharingForumLike = new SharingForumLikes();
         Optional<SharingForumLikes> optionalForumLikes = findByForumAndUser(forum, user);
         if (optionalForumLikes.isPresent()) {
-            sharingForumLike = optionalForumLikes.get();
-            sharingForumLike.setIsDeleted(!sharingForumLike.getIsDeleted());
-        } else {
-            sharingForumLike.setIdUser(user);
-            sharingForumLike.setIdForum(forum);
-            sharingForumLike.setIsDeleted(false);
+            cleanUpService.cleanForumLikes(optionalForumLikes.get());
         }
+        SharingForumLikes sharingForumLike = new SharingForumLikes();
+        sharingForumLike.setIdUser(user);
+        sharingForumLike.setIdForum(forum);
+        sharingForumLike.setIsDeleted(false);
         sharingForumLike.setCreatedAt(LocalDateTime.now());
         sharingForumLikesRepository.save(sharingForumLike);
         return forum;

@@ -174,8 +174,8 @@ public class AuthController {
                     String fcmToken = otpService.verifyOTPReturnFcmTokenEmail(otpVerifDTO.getLoginId(),
                             otpVerifDTO.getCode(), true);
                     if (fcmToken != null) {
-                        otpService.clearExistingOTP(loginInfo);
                         String token = authService.verifyLoginInfo(loginInfo, fcmToken);
+                        otpService.clearExistingOTP(loginInfo);
                         EmailDetails email = new EmailDetails();
                         email.setRecipient(loginInfo.getEmail());
                         email.setSubject("Selamat Bergabung di SerenyPals");
@@ -222,8 +222,8 @@ public class AuthController {
                     String emailAddress = otpService.verifyOTPReturnFcmTokenEmail(otpVerifDTO.getLoginId(),
                             otpVerifDTO.getCode(), false);
                     if (emailAddress != null) {
-                        otpService.clearExistingOTP(loginInfo);
                         authService.changeEmailOTP(loginInfo, emailAddress);
+                        otpService.clearExistingOTP(loginInfo);
                         EmailDetails email = new EmailDetails();
                         email.setRecipient(emailAddress);
                         email.setSubject("Email Anda diganti");

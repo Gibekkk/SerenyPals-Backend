@@ -18,6 +18,9 @@ public class OTPService {
     @Autowired
     private OTPRepository otpRepository;
 
+    @Autowired
+    private CleanUpService cleanUpService;
+
     private int OTP_LENGTH = 6;
     private int OTP_TIME_OUT = 3;
 
@@ -31,7 +34,6 @@ public class OTPService {
         otp.setCode(code);
         otp.setExpiryTime(expiry);
         otp.setIsRegistration(isRegistration);
-        otp.setIsDeleted(false);
         otp.setIdLogin(loginInfo);
         otp.setFcmTokenEmail(fcmTokenEmail);
         otpRepository.save(otp);
@@ -62,8 +64,7 @@ public class OTPService {
     }
 
     public void deleteOTP(OTP otp) {
-        otp.setIsDeleted(true);
-        otpRepository.save(otp);
+        cleanUpService.cleanOTP(otp);
     }
 
     public void clearExistingOTP(LoginInfo loginInfo) {
