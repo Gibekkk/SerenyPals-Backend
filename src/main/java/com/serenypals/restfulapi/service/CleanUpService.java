@@ -101,7 +101,7 @@ public class CleanUpService {
         User user = sharingForumLikes.getIdUser();
         sharingForumLikes.setIdUser(null);
         sharingForum.getSharingForumLikes().remove(sharingForumLikes);
-        user.getSharingForumLikes().remove(sharingForumLikes);
+        user.getUserForumLikes().remove(sharingForumLikes);
         sharingForumLikesRepository.delete(sharingForumLikes);
         sharingForumRepository.save(sharingForum);
         userRepository.save(user);
@@ -116,7 +116,7 @@ public class CleanUpService {
                 User user = sharingForumComments.getIdUser();
                 sharingForumComments.setIdUser(null);
                 sharingForum.getSharingForumComments().remove(sharingForumComments);
-                user.getSharingForumComments().remove(sharingForumComments);
+                user.getUserForumComments().remove(sharingForumComments);
                 sharingForumCommentsRepository.delete(sharingForumComments);
                 sharingForumRepository.save(sharingForum);
                 userRepository.save(user);

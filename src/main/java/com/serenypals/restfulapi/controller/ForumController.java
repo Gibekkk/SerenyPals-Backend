@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.serenypals.restfulapi.model.User;
-import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.model.SharingForum;
+import com.serenypals.restfulapi.model.SharingForumComments;
 import com.serenypals.restfulapi.dto.ForumDTO;
 import com.serenypals.restfulapi.dto.CommentDTO;
 import com.serenypals.restfulapi.service.AuthService;
@@ -44,6 +44,120 @@ public class ForumController {
     private SharingForumService sharingForumService;
 
     private Object data = "";
+
+    @PatchMapping("/{commentId}/comment")
+    public ResponseEntity<Object> editCommentForum(HttpServletRequest request, @RequestBody CommentDTO commentDTO,
+            @PathVariable String commentId)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (commentDTO.checkDTO()) {
+                if (authService.isSessionAlive(sessionToken)) {
+                    if (authService.isSessionUser(sessionToken)) {
+                        User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser();
+                        Optional<SharingForumComments> optionalForumComment = sharingForumService.findForumCommentById(commentId);
+                        if (optionalForumComment.isPresent()) {
+                            SharingForumComments forumComment = optionalForumComment.get();
+                            if(forumComment.getIdUser().equals(user)){
+                            if (sharingForumService.isContentSafe(commentDTO.getComment())) {
+                                SharingForum forum = sharingForumService.editForumComment(forumComment, user, commentDTO.getComment());
+                                data = Map.ofEntries(
+                                        Map.entry("id", forum.getId()),
+                                        Map.entry("userId", forum.getIdUser().getId()),
+                                        Map.entry("judul", forum.getJudul()),
+                                        Map.entry("content", forum.getContent()),
+                                        Map.entry("createdAt", forum.getCreatedAt().toString()),
+                                        Map.entry("editedAt", forum.getEditedAt().toString()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(forum)),
+                                        Map.entry("isLiked", sharingForumService.isLiked(forum, user)),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(forum)),
+                                        Map.entry("comments", sharingForumService.getComments(forum)),
+                                        Map.entry("isSelfForum", forum.getIdUser() == user));
+                            } else {
+                                httpCode = HTTPCode.FORBIDDEN;
+                                data = new ErrorMessage(httpCode,
+                                        "Konten Forum Tidak Sopan dan Mungkin Bisa Menyinggung Seseorang");
+                            }
+                        } else {
+                         httpCode = HTTPCode.FORBIDDEN;
+                                data = new ErrorMessage(httpCode,
+                                        "Bukan Komentar Anda");   
+                        }
+                        } else {
+                            httpCode = HTTPCode.NOT_FOUND;
+                            data = new ErrorMessage(httpCode, "Komentar Forum tidak ditemukan");
+                        }
+                    } else {
+                        httpCode = HTTPCode.FORBIDDEN;
+                        data = new ErrorMessage(httpCode, "Akses Anda Ditolak Untuk Fitur Ini");
+                    }
+                } else {
+                    httpCode = HTTPCode.UNAUTHORIZED;
+                    data = new ErrorMessage(httpCode, "Session Token Tidak Valid, Mohon Melakukan Login Kembali");
+                }
+            } else {
+                httpCode = HTTPCode.BAD_REQUEST;
+                data = new ErrorMessage(httpCode, "Komentar Tidak Valid");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @DeleteMapping("/{commentId}/comment")
+    public ResponseEntity<Object> deleteCommentForum(HttpServletRequest request,
+            @PathVariable String commentId)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+                if (authService.isSessionAlive(sessionToken)) {
+                    if (authService.isSessionUser(sessionToken)) {
+                        User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser();
+                        Optional<SharingForumComments> optionalForumComment = sharingForumService.findForumCommentById(commentId);
+                        if (optionalForumComment.isPresent()) {
+                            SharingForumComments forumComment = optionalForumComment.get();
+                            if (forumComment.getIdUser().equals(user)) {
+                                sharingForumService.deleteForumComment(forumComment);
+                                data = Map.of("Status", "Komentar Dihapus");
+                            } else {
+                                httpCode = HTTPCode.FORBIDDEN;
+                                data = new ErrorMessage(httpCode,
+                                        "Bukan Komentar Forum Anda");
+                            }
+                        } else {
+                            httpCode = HTTPCode.NOT_FOUND;
+                            data = new ErrorMessage(httpCode, "Komentar Forum tidak ditemukan");
+                        }
+                    } else {
+                        httpCode = HTTPCode.FORBIDDEN;
+                        data = new ErrorMessage(httpCode, "Akses Anda Ditolak Untuk Fitur Ini");
+                    }
+                } else {
+                    httpCode = HTTPCode.UNAUTHORIZED;
+                    data = new ErrorMessage(httpCode, "Session Token Tidak Valid, Mohon Melakukan Login Kembali");
+                }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
 
     @PostMapping("/{forumId}/comment")
     public ResponseEntity<Object> commentForum(HttpServletRequest request, @RequestBody CommentDTO commentDTO,
@@ -68,9 +182,9 @@ public class ForumController {
                                         Map.entry("content", forum.getContent()),
                                         Map.entry("createdAt", forum.getCreatedAt().toString()),
                                         Map.entry("editedAt", forum.getEditedAt().toString()),
-                                        Map.entry("likeCount", forum.getLikeCount()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(forum)),
                                         Map.entry("isLiked", sharingForumService.isLiked(forum, user)),
-                                        Map.entry("commentCount", forum.getCommentCount()),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(forum)),
                                         Map.entry("comments", sharingForumService.getComments(forum)),
                                         Map.entry("isSelfForum", forum.getIdUser() == user));
                             } else {
@@ -107,7 +221,7 @@ public class ForumController {
                 .body(data);
     }
 
-    @PostMapping("/{forumId}/like")
+    @PostMapping("/{forumId}/toggleLike")
     public ResponseEntity<Object> likeForum(HttpServletRequest request,
             @PathVariable String forumId)
             throws Exception {
@@ -128,9 +242,9 @@ public class ForumController {
                                         Map.entry("content", forum.getContent()),
                                         Map.entry("createdAt", forum.getCreatedAt().toString()),
                                         Map.entry("editedAt", forum.getEditedAt().toString()),
-                                        Map.entry("likeCount", forum.getLikeCount()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(forum)),
                                         Map.entry("isLiked", sharingForumService.isLiked(forum, user)),
-                                        Map.entry("commentCount", forum.getCommentCount()),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(forum)),
                                         Map.entry("comments", sharingForumService.getComments(forum)),
                                         Map.entry("isSelfForum", forum.getIdUser() == user));
                     } else {
@@ -170,7 +284,7 @@ public class ForumController {
                     if (authService.isSessionUser(sessionToken)) {
                         User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser();
                         if (sharingForumService.isContentSafe(forumDTO.getContent())
-                                || sharingForumService.isContentSafe(forumDTO.getJudul())) {
+                                && sharingForumService.isContentSafe(forumDTO.getJudul())) {
                             Optional<SharingForum> optionalForum = sharingForumService.findForumById(forumId);
                             if (optionalForum.isPresent()) {
                                 SharingForum forum = optionalForum.get();
@@ -183,9 +297,9 @@ public class ForumController {
                                         Map.entry("content", forum.getContent()),
                                         Map.entry("createdAt", forum.getCreatedAt().toString()),
                                         Map.entry("editedAt", forum.getEditedAt().toString()),
-                                        Map.entry("likeCount", forum.getLikeCount()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(forum)),
                                         Map.entry("isLiked", sharingForumService.isLiked(forum, user)),
-                                        Map.entry("commentCount", forum.getCommentCount()),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(forum)),
                                         Map.entry("comments", sharingForumService.getComments(forum)),
                                         Map.entry("isSelfForum", forum.getIdUser() == user));
                                 } else {
@@ -241,7 +355,7 @@ public class ForumController {
                         SharingForum forum = optionalForum.get();
                         if (forum.getIdUser().equals(user)) {
                             forum = sharingForumService.deleteForum(forum);
-                            data = Map.of("Status", "Forum Deleted");
+                            data = Map.of("Status", "Forum Dihapus");
                         } else {
                             httpCode = HTTPCode.FORBIDDEN;
                             data = new ErrorMessage(httpCode, "Bukan Forum Anda");
@@ -282,7 +396,7 @@ public class ForumController {
                     if (authService.isSessionUser(sessionToken)) {
                         User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser();
                         if (sharingForumService.isContentSafe(forumDTO.getContent())
-                                || sharingForumService.isContentSafe(forumDTO.getJudul())) {
+                                && sharingForumService.isContentSafe(forumDTO.getJudul())) {
                             SharingForum newForum = sharingForumService.createForum(forumDTO, user);
                             data = Map.ofEntries(
                                         Map.entry("id", newForum.getId()),
@@ -291,9 +405,9 @@ public class ForumController {
                                         Map.entry("content", newForum.getContent()),
                                         Map.entry("createdAt", newForum.getCreatedAt().toString()),
                                         Map.entry("editedAt", newForum.getEditedAt().toString()),
-                                        Map.entry("likeCount", newForum.getLikeCount()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(newForum)),
                                         Map.entry("isLiked", sharingForumService.isLiked(newForum, user)),
-                                        Map.entry("commentCount", newForum.getCommentCount()),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(newForum)),
                                         Map.entry("comments", sharingForumService.getComments(newForum)),
                                         Map.entry("isSelfForum", newForum.getIdUser() == user));
                         } else {
@@ -345,9 +459,9 @@ public class ForumController {
                                         Map.entry("content", forum.getContent()),
                                         Map.entry("createdAt", forum.getCreatedAt().toString()),
                                         Map.entry("editedAt", forum.getEditedAt().toString()),
-                                        Map.entry("likeCount", forum.getLikeCount()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(forum)),
                                         Map.entry("isLiked", sharingForumService.isLiked(forum, user)),
-                                        Map.entry("commentCount", forum.getCommentCount()),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(forum)),
                                         Map.entry("comments", sharingForumService.getComments(forum)),
                                         Map.entry("isSelfForum", forum.getIdUser() == user)));
                     }
@@ -392,9 +506,9 @@ public class ForumController {
                                         Map.entry("content", forum.getContent()),
                                         Map.entry("createdAt", forum.getCreatedAt().toString()),
                                         Map.entry("editedAt", forum.getEditedAt().toString()),
-                                        Map.entry("likeCount", forum.getLikeCount()),
+                                        Map.entry("likeCount", sharingForumService.getLikeCount(forum)),
                                         Map.entry("isLiked", sharingForumService.isLiked(forum, user)),
-                                        Map.entry("commentCount", forum.getCommentCount()),
+                                        Map.entry("commentCount", sharingForumService.getCommentCount(forum)),
                                         Map.entry("comments", sharingForumService.getComments(forum)),
                                         Map.entry("isSelfForum", forum.getIdUser() == user));
                     } else {

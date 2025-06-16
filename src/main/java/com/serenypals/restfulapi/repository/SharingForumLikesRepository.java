@@ -1,5 +1,6 @@
 package com.serenypals.restfulapi.repository;
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,4 +10,5 @@ import com.serenypals.restfulapi.model.User;
 
 public interface SharingForumLikesRepository extends JpaRepository<SharingForumLikes, String> {
     Optional<SharingForumLikes> findByIdForumAndIdUser(SharingForum idForum, User idUser);
+    List<SharingForumLikes> findAllByIdForum(SharingForum idForum);
 }

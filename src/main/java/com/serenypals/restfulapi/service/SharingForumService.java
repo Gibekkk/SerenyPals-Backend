@@ -44,6 +44,10 @@ public class SharingForumService {
         return sharingForumRepository.findById(id).filter(f -> f.getDeletedAt() == null);
     }
 
+    public Optional<SharingForumComments> findForumCommentById(String id) {
+        return sharingForumCommentsRepository.findById(id).filter(f -> f.getDeletedAt() == null && f.getIdForum().getDeletedAt() == null);
+    }
+
     public List<SharingForum> findAllForumsByLoginInfo(LoginInfo loginInfo) {
         return sharingForumRepository.findAll().stream()
                 .filter(forum -> forum.getDeletedAt() == null)
@@ -76,24 +80,28 @@ public class SharingForumService {
     }
 
     public boolean isLiked(SharingForum forum, User user) {
-        Optional<SharingForumLikes> sharingForumLike = findByForumAndUser(forum, user);
-        if(sharingForumLike.isPresent()) {
-            return sharingForumLike.get().getIsDeleted() ? false : true;
-        }
-        return false;
+        return findByForumAndUser(forum, user).isPresent();
+    }
+
+    public int getLikeCount(SharingForum forum) {
+        return sharingForumLikesRepository.findAllByIdForum(forum).size();
+    }
+
+    public int getCommentCount(SharingForum forum) {
+        return sharingForumCommentsRepository.findAllByIdForumAndDeletedAtIsNull(forum).size();
     }
 
     public SharingForum toggleLikeForum(SharingForum forum, User user) {
         Optional<SharingForumLikes> optionalForumLikes = findByForumAndUser(forum, user);
         if (optionalForumLikes.isPresent()) {
             cleanUpService.cleanForumLikes(optionalForumLikes.get());
+        } else {
+            SharingForumLikes sharingForumLike = new SharingForumLikes();
+            sharingForumLike.setIdUser(user);
+            sharingForumLike.setIdForum(forum);
+            sharingForumLike.setCreatedAt(LocalDateTime.now());
+            sharingForumLikesRepository.save(sharingForumLike);
         }
-        SharingForumLikes sharingForumLike = new SharingForumLikes();
-        sharingForumLike.setIdUser(user);
-        sharingForumLike.setIdForum(forum);
-        sharingForumLike.setIsDeleted(false);
-        sharingForumLike.setCreatedAt(LocalDateTime.now());
-        sharingForumLikesRepository.save(sharingForumLike);
         return forum;
     }
 
@@ -102,6 +110,13 @@ public class SharingForumService {
         forum.setContent(forumDTO.getContent());
         forum.setEditedAt(LocalDateTime.now());
         return sharingForumRepository.save(forum);
+    }
+
+    public SharingForum editForumComment(SharingForumComments forumComment, User user, String comment) {
+        forumComment.setComment(comment);
+        forumComment.setEditedAt(LocalDateTime.now());
+        sharingForumCommentsRepository.save(forumComment);
+        return forumComment.getIdForum();
     }
 
     public SharingForum commentForum(SharingForum forum, User user, String comment) {
@@ -115,7 +130,13 @@ public class SharingForumService {
         return forum;
     }
 
-    public SharingForum editCommentForum(SharingForum forum, User user, String comment, SharingForumComments forumComment) {
+    public void deleteForumComment(SharingForumComments forumComment) {
+        forumComment.setDeletedAt(LocalDate.now());
+        sharingForumCommentsRepository.save(forumComment);
+    }
+
+    public SharingForum editCommentForum(SharingForum forum, User user, String comment,
+            SharingForumComments forumComment) {
         forumComment.setComment(comment);
         forumComment.setEditedAt(LocalDateTime.now());
         sharingForumCommentsRepository.save(forumComment);
@@ -124,14 +145,13 @@ public class SharingForumService {
 
     public ArrayList<Object> getComments(SharingForum forum) {
         ArrayList<Object> comments = new ArrayList<Object>();
-        for(SharingForumComments comment : getForumComments(forum)) {
+        for (SharingForumComments comment : getForumComments(forum)) {
             comments.add(Map.of(
-                "id", comment.getId(),
-                "comment", comment.getComment(),
-                "userId", comment.getIdUser().getId(),
-                "createdAt", comment.getCreatedAt(),
-                "editedAt", comment.getEditedAt()
-            ));
+                    "id", comment.getId(),
+                    "comment", comment.getComment(),
+                    "userId", comment.getIdUser().getId(),
+                    "createdAt", comment.getCreatedAt(),
+                    "editedAt", comment.getEditedAt()));
         }
         return comments;
     }

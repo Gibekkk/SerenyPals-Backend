@@ -57,12 +57,4 @@ public class SharingForum {
     
     @OneToMany(mappedBy = "idForum", cascade = CascadeType.ALL)
     private Set<SharingForumLikes> sharingForumLikes;
-
-    public int getLikeCount() {
-        return sharingForumLikes != null ? sharingForumLikes.size() : 0;
-    }
-
-    public int getCommentCount() {
-        return sharingForumComments != null ? sharingForumComments.size() : 0;
-    }
 }

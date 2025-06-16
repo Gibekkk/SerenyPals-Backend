@@ -55,7 +55,7 @@ public class PromptController {
                     if (optionalRoom.isPresent()) {
                         AIChatRoom chatRoom = optionalRoom.get();
                         if (chatRoom.getIdUser().getIdLogin().equals(loginInfo)) {
-                            data = data = Map.of(
+                            data = Map.of(
                                     "chatRoomId", chatRoom.getId(),
                                     "chatRoomName", chatRoom.getJudulChat(),
                                     "chatHistory", promptService.getHistory(chatRoom));
@@ -102,7 +102,7 @@ public class PromptController {
                         AIChatRoom chatRoom = optionalRoom.get();
                         if (chatRoom.getIdUser().getIdLogin().equals(loginInfo)) {
                             promptService.deleteChatRoomById(chatRoom);
-                            data = data = Map.of("Status", "Chat Room Berhasil Dihapus");
+                            data = Map.of("Status", "Chat Room Berhasil Dihapus");
                         } else {
                             httpCode = HTTPCode.FORBIDDEN;
                             data = new ErrorMessage(httpCode, "Anda Tidak Memiliki Akses Ke Chat Room Ini");

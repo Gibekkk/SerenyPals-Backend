@@ -86,7 +86,6 @@ public class OTPService {
             if (checkOTP(otp, loginId, code)) {
                 if ((isRegistration && !otp.getIsRegistration()) || (!isRegistration && otp.getIsRegistration()))
                     return false;
-                deleteOTP(otp);
                 return true;
             }
         }
@@ -100,7 +99,6 @@ public class OTPService {
                 if ((isRegistration && !otp.getIsRegistration()) || (!isRegistration && otp.getIsRegistration()))
                     return null;
                 String fcmToken = otp.getFcmTokenEmail();
-                deleteOTP(otp);
                 return fcmToken;
             }
         }
