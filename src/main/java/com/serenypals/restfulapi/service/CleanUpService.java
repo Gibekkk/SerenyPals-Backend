@@ -87,7 +87,7 @@ public class CleanUpService {
         for (VirtualDiary virtualDiary : virtualDiaryRepository.findAll()) {
             if (inDeletion(virtualDiary.getDeletedAt())) {
                 User user = virtualDiary.getIdUser();
-                user.getUserDiaries().remove(virtualDiary);
+                user.getVirtualDiaries().remove(virtualDiary);
                 virtualDiaryRepository.delete(virtualDiary);
                 userRepository.save(user);
             }
