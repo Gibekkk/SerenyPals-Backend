@@ -1,7 +1,5 @@
 package com.serenypals.restfulapi.model;
 
-import static org.junit.jupiter.api.DynamicTest.stream;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;

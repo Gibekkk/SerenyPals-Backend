@@ -142,11 +142,11 @@ public class AuthController {
                     data = Map.of("status", "OTP Deleted");
                 } else {
                     httpCode = HTTPCode.NOT_FOUND;
-                    data = new ErrorMessage(httpCode, "Refresh OTP Gagal, OTP Tidak Ditemukan");
+                    data = new ErrorMessage(httpCode, "Delete OTP Gagal, OTP Tidak Ditemukan");
                 }
             } else {
                 httpCode = HTTPCode.NOT_FOUND;
-                data = new ErrorMessage(httpCode, "Refresh OTP Gagal, ID Login Tidak Ditemukan");
+                data = new ErrorMessage(httpCode, "Delete OTP Gagal, ID Login Tidak Ditemukan");
             }
         } catch (IllegalArgumentException e) {
             httpCode = HTTPCode.BAD_REQUEST;
@@ -174,8 +174,8 @@ public class AuthController {
                     String fcmToken = otpService.verifyOTPReturnFcmTokenEmail(otpVerifDTO.getLoginId(),
                             otpVerifDTO.getCode(), true);
                     if (fcmToken != null) {
-                        otpService.clearExistingOTP(loginInfo);
                         String token = authService.verifyLoginInfo(loginInfo, fcmToken);
+                        otpService.clearExistingOTP(loginInfo);
                         EmailDetails email = new EmailDetails();
                         email.setRecipient(loginInfo.getEmail());
                         email.setSubject("Selamat Bergabung di SerenyPals");
@@ -222,8 +222,8 @@ public class AuthController {
                     String emailAddress = otpService.verifyOTPReturnFcmTokenEmail(otpVerifDTO.getLoginId(),
                             otpVerifDTO.getCode(), false);
                     if (emailAddress != null) {
-                        otpService.clearExistingOTP(loginInfo);
                         authService.changeEmailOTP(loginInfo, emailAddress);
+                        otpService.clearExistingOTP(loginInfo);
                         EmailDetails email = new EmailDetails();
                         email.setRecipient(emailAddress);
                         email.setSubject("Email Anda diganti");
