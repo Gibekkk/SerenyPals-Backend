@@ -15,9 +15,10 @@ public class EmailDTO {
     private String email;
 
     public boolean checkDTO() {
+        trim();
         if (this.email == null)
             throw new IllegalArgumentException("Email Tidak Boleh Bernilai NULL");
-        return this.email != null;
+        return this.email != null && checkLength();
     }
 
     public boolean checkLength() {

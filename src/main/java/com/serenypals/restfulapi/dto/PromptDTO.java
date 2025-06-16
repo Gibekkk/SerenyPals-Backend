@@ -15,9 +15,10 @@ public class PromptDTO {
     private String prompt;
 
     public boolean checkDTO() {
+        trim();
         if (this.prompt == null)
             throw new IllegalArgumentException("Prompt Tidak Boleh Bernilai NULL");
-        return this.prompt != null;
+        return this.prompt != null && checkLength();
     }
 
     public boolean checkLength() {

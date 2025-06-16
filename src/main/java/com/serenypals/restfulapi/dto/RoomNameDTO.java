@@ -15,9 +15,10 @@ public class RoomNameDTO {
     private String roomName;
 
     public boolean checkDTO() {
+        trim();
         if (this.roomName == null)
             throw new IllegalArgumentException("Judul Chat Tidak Boleh Bernilai NULL");
-        return this.roomName != null;
+        return this.roomName != null && checkLength();
     }
 
     public boolean checkLength() {
