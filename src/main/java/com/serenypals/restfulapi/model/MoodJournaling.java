@@ -34,13 +34,13 @@ public class MoodJournaling {
     @JoinColumn(nullable = false, name = "id_user", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_mood_journaling_user"))
     private User idUser;
 
-    @Column(name = "gangguan", length = 255, nullable = false)
+    @Column(name = "gangguan", length = 255, nullable = true)
     private String gangguan;
 
     @Column(name = "mood_scale", nullable = false)
     private int moodScale;
 
-    @Column(name = "cerita", nullable = false, columnDefinition="TEXT")
+    @Column(name = "cerita", nullable = true, columnDefinition="TEXT")
     private String cerita;
 
     @Column(name = "created_at", nullable = false)

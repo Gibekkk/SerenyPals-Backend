@@ -15,9 +15,10 @@ public class CommentDTO {
     private String comment;
 
     public boolean checkDTO() {
+        trim();
         if (this.comment == null)
             throw new IllegalArgumentException("Komentar Tidak Boleh Bernilai NULL");
-        return this.comment != null;
+        return this.comment != null && checkLength();
     }
 
     public boolean checkLength() {

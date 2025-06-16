@@ -16,11 +16,12 @@ public class ForumDTO {
     private String content;
 
     public boolean checkDTO() {
+        trim();
         if (this.judul == null)
             throw new IllegalArgumentException("Judul Tidak Boleh Bernilai NULL");
         if (this.content == null)
             throw new IllegalArgumentException("Konten Tidak Boleh Bernilai NULL");
-        return this.judul != null && this.content != null;
+        return this.judul != null && this.content != null && checkLength();
     }
 
     public boolean checkLength() {
