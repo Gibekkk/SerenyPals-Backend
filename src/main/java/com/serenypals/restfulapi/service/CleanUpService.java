@@ -42,9 +42,6 @@ public class CleanUpService {
     private VirtualDiaryRepository virtualDiaryRepository;
 
     @Autowired
-    private TipsRepository tipsRepository;
-
-    @Autowired
     private OTPRepository otpRepository;
 
     @Autowired

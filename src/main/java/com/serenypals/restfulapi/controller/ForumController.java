@@ -354,7 +354,7 @@ public class ForumController {
                     if (optionalForum.isPresent()) {
                         SharingForum forum = optionalForum.get();
                         if (forum.getIdUser().equals(user)) {
-                            forum = sharingForumService.deleteForum(forum);
+                            sharingForumService.deleteForum(forum);
                             data = Map.of("Status", "Forum Dihapus");
                         } else {
                             httpCode = HTTPCode.FORBIDDEN;
