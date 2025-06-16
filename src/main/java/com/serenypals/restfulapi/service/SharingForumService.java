@@ -18,7 +18,6 @@ import com.serenypals.restfulapi.repository.SharingForumLikesRepository;
 import com.serenypals.restfulapi.model.SharingForum;
 import com.serenypals.restfulapi.model.SharingForumComments;
 import com.serenypals.restfulapi.model.SharingForumLikes;
-import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.model.User;
 import com.serenypals.restfulapi.dto.ForumDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,13 +45,6 @@ public class SharingForumService {
 
     public Optional<SharingForumComments> findForumCommentById(String id) {
         return sharingForumCommentsRepository.findById(id).filter(f -> f.getDeletedAt() == null && f.getIdForum().getDeletedAt() == null);
-    }
-
-    public List<SharingForum> findAllForumsByLoginInfo(LoginInfo loginInfo) {
-        return sharingForumRepository.findAll().stream()
-                .filter(forum -> forum.getDeletedAt() == null)
-                .filter(forum -> forum.getIdUser().getIdLogin().equals(loginInfo))
-                .collect(Collectors.toList());
     }
 
     public List<SharingForum> findAllForums() {
@@ -164,19 +156,12 @@ public class SharingForumService {
                 .collect(Collectors.toList());
     }
 
-    public SharingForum deleteForum(SharingForum forum) {
+    public void deleteForum(SharingForum forum) {
         forum.setDeletedAt(LocalDate.now());
-        return sharingForumRepository.save(forum);
+        sharingForumRepository.save(forum);
     }
 
     public Optional<SharingForumComments> findForumCommentsById(String id) {
         return sharingForumCommentsRepository.findById(id).filter(f -> f.getDeletedAt() == null);
-    }
-
-    public List<SharingForumComments> findAllForumCommentsByLoginInfo(LoginInfo loginInfo) {
-        return sharingForumCommentsRepository.findAll().stream()
-                .filter(comment -> comment.getDeletedAt() == null)
-                .filter(comment -> comment.getIdUser().getIdLogin().equals(loginInfo))
-                .collect(Collectors.toList());
     }
 }

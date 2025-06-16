@@ -1,6 +1,7 @@
 package com.serenypals.restfulapi.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,8 +18,6 @@ import lombok.Setter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import com.serenypals.restfulapi.enums.Emoji;
 
 @Setter
 @Getter
@@ -43,16 +42,15 @@ public class VirtualDiary {
     @Column(name = "content", nullable = false, columnDefinition="TEXT")
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "emoji", nullable = false)
-    private Emoji emoji;
+    @Column(name = "emoji", length = 1, nullable = false)
+    private String emoji;
 
     @Column(name = "deleted_at", nullable = true)
     private LocalDate deletedAt;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "edited_at", nullable = false)
-    private LocalDate editedAt;
+    private LocalDateTime editedAt;
 }

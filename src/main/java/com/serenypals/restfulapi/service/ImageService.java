@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 import javax.imageio.IIOImage;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.serenypals.restfulapi.util.PasswordHasherMatcher;
+import com.serenypals.restfulapi.util.Base64Converter;
 
 @Service
 public class ImageService {
@@ -31,12 +31,15 @@ public class ImageService {
     @Autowired
     private PasswordHasherMatcher passwordHasherMatcher;
 
+    @Autowired
+    private Base64Converter base64Converter;
+
     @Value("${storage.server-host}${storage.api-prefix}/")
     private String serverPath;
 
     public String saveImage(String fileName, MultipartFile file, String pathToFoto, boolean fitPicture, Boolean isCompressing) {
         try {
-            fileName = Base64.getEncoder().encodeToString(passwordHasherMatcher.hashPassword(fileName).getBytes());
+            fileName = base64Converter.encrypt(passwordHasherMatcher.hashPassword(fileName));
             Path uploadPath = Paths.get(pathToFoto);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
