@@ -1,6 +1,6 @@
 package com.serenypals.restfulapi.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,8 +40,8 @@ public class PsikologChat {
     private Boolean isPsikolog;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "seen_at", nullable = true)
-    private LocalDate seenAt;
+    private LocalDateTime seenAt;
 }

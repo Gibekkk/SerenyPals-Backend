@@ -1,7 +1,11 @@
 package com.serenypals.restfulapi.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -40,18 +44,28 @@ public class PsikologChatRoom {
     @JoinColumn(nullable = false, name = "id_psikolog", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_psikolog_chat_room_psikolog"))
     private Psikolog idPsikolog;
 
-    @Column(name = "judul_chat", length = 255, nullable = false)
-    private String judulChat;
-
     @Column(name = "deleted_at", nullable = true)
     private LocalDate deletedAt;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "edited_at", nullable = false)
-    private LocalDate editedAt;
-    
+    private LocalDateTime editedAt;
+
     @OneToMany(mappedBy = "idChatRoom", cascade = CascadeType.ALL)
     private Set<PsikologChat> chats;
+
+    public LocalDateTime getLastChatDateTime() {
+        return chats.size() > 0 ? chats.stream()
+                .map(PsikologChat::getCreatedAt)
+                .max(LocalDateTime::compareTo).get() : this.createdAt;
+    }
+
+    public PsikologChat getLastChat() {
+        List<PsikologChat> psikologChatList = chats.stream()
+                .sorted(Comparator.comparing(PsikologChat::getCreatedAt))
+                .collect(Collectors.toList());
+        return psikologChatList.size() > 0 ? psikologChatList.get(psikologChatList.size() - 1) : null;
+    }
 }

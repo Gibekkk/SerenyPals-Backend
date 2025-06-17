@@ -48,8 +48,8 @@ public class BookingPsikolog {
     private LocalDate deletedAt;
     
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "edited_at", nullable = false)
-    private LocalDate editedAt;
+    private LocalDateTime editedAt;
 }
