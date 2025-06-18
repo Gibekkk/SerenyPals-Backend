@@ -19,6 +19,7 @@ import com.serenypals.restfulapi.repository.BookingPsikologRepository;
 import com.serenypals.restfulapi.model.PsikologChatRoom;
 import com.serenypals.restfulapi.repository.PsikologChatRepository;
 import com.serenypals.restfulapi.dto.BookingDTO;
+import com.serenypals.restfulapi.dto.ChatDTO;
 import com.serenypals.restfulapi.model.Psikolog;
 import com.serenypals.restfulapi.model.PsikologChat;
 import com.serenypals.restfulapi.model.BookingPsikolog;
@@ -78,8 +79,57 @@ public class PsikologService {
         return psikologChatRoomRepository.save(psikologChatRoom);
     }
 
-    public PsikologChatRoom findByBooking(BookingPsikolog booking) {
+    public PsikologChatRoom findChatRoomByBooking(BookingPsikolog booking) {
         return findChatRoomByUserAndPsikolog(booking.getIdPsikolog(), booking.getIdUser()).get();
+    }
+
+    public PsikologChat sendChatUser(PsikologChatRoom chatRoom, ChatDTO chatDTO) {
+        PsikologChat newChat = new PsikologChat();
+        newChat.setChat(chatDTO.getChat());
+        newChat.setIdChatRoom(chatRoom);
+        newChat.setIsPsikolog(false);
+        newChat.setCreatedAt(LocalDateTime.now());
+        return psikologChatRepository.save(newChat);
+    }
+
+    public PsikologChat sendChatPsikolog(PsikologChatRoom chatRoom, ChatDTO chatDTO) {
+        PsikologChat newChat = new PsikologChat();
+        newChat.setChat(chatDTO.getChat());
+        newChat.setIdChatRoom(chatRoom);
+        newChat.setIsPsikolog(true);
+        newChat.setCreatedAt(LocalDateTime.now());
+        return psikologChatRepository.save(newChat);
+    }
+
+    public void seeChatFromUser(PsikologChatRoom chatRoom) {
+        for (PsikologChat chat : chatRoom.getChats()) {
+            if (chat.getIsPsikolog() && chat.getSeenAt() == null) {
+                chat.setSeenAt(LocalDateTime.now());
+                psikologChatRepository.save(chat);
+            }
+        }
+    }
+
+    public ArrayList<Object> getChatsFromChatRoom(PsikologChatRoom chatRoom) {
+        ArrayList<Object> result = new ArrayList<Object>();
+        for (PsikologChat chat : chatRoom.getChats()) {
+            result.add(Map.of(
+                    "id", chat.getId(),
+                    "chat", chat.getChat(),
+                    "isPsikolog", chat.getIsPsikolog(),
+                    "createdAt", chat.getCreatedAt().toString(),
+                    "seenAt", Optional.ofNullable(chat.getSeenAt()).map(seenAt -> seenAt.toString()).orElse("")));
+        }
+        return result;
+    }
+
+    public void seeChatFromPsikolog(PsikologChatRoom chatRoom) {
+        for (PsikologChat chat : chatRoom.getChats()) {
+            if (!chat.getIsPsikolog() && chat.getSeenAt() == null) {
+                chat.setSeenAt(LocalDateTime.now());
+                psikologChatRepository.save(chat);
+            }
+        }
     }
 
     public List<PsikologChatRoom> getChatRoomsByUser(User user) {
@@ -92,6 +142,22 @@ public class PsikologService {
 
     public Optional<PsikologChatRoom> getChatRoomByUserAndId(User user, String id) {
         for (PsikologChatRoom chatRoom : getChatRoomsByUser(user)) {
+            if (chatRoom.getId().equals(id))
+                return Optional.of(chatRoom);
+        }
+        return Optional.empty();
+    }
+
+    public List<PsikologChatRoom> getChatRoomsByPsikolog(Psikolog psikolog) {
+        return psikologChatRoomRepository.findAll().stream()
+                .filter(chatRoom -> chatRoom.getDeletedAt() == null)
+                .filter(chatRoom -> chatRoom.getIdPsikolog().equals(psikolog))
+                .sorted(Comparator.comparing(PsikologChatRoom::getLastChatDateTime).reversed())
+                .collect(Collectors.toList());
+    }
+
+    public Optional<PsikologChatRoom> getChatRoomByPsikologAndId(Psikolog psikolog, String id) {
+        for (PsikologChatRoom chatRoom : getChatRoomsByPsikolog(psikolog)) {
             if (chatRoom.getId().equals(id))
                 return Optional.of(chatRoom);
         }
@@ -143,7 +209,7 @@ public class PsikologService {
                     "editedAt", booking.getEditedAt(),
                     "psikologId", booking.getIdPsikolog().getId(),
                     "userId", booking.getIdUser().getId(),
-                    "chatRoomId", findByBooking(booking).getId()));
+                    "chatRoomId", findChatRoomByBooking(booking).getId()));
         }
         return result;
     }
@@ -159,7 +225,7 @@ public class PsikologService {
                     "editedAt", booking.getEditedAt(),
                     "psikologId", booking.getIdPsikolog().getId(),
                     "userId", booking.getIdUser().getId(),
-                    "chatRoomId", findByBooking(booking).getId()));
+                    "chatRoomId", findChatRoomByBooking(booking).getId()));
         }
         return result;
     }

@@ -23,6 +23,7 @@ import com.serenypals.restfulapi.model.Psikolog;
 import com.serenypals.restfulapi.model.BookingPsikolog;
 import com.serenypals.restfulapi.model.PsikologChatRoom;
 import com.serenypals.restfulapi.dto.BookingDTO;
+import com.serenypals.restfulapi.dto.ChatDTO;
 import com.serenypals.restfulapi.model.User;
 import com.serenypals.restfulapi.model.LoginInfo;
 import com.serenypals.restfulapi.service.AuthService;
@@ -44,6 +45,134 @@ public class PsikologController {
 
     private Object data = "";
 
+    @PostMapping("/chatRoom/{chatRoomId}/psikolog")
+    public ResponseEntity<Object> sendChatPsikolog(HttpServletRequest request, @PathVariable String chatRoomId,
+            @RequestBody ChatDTO chatDTO)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (chatDTO.checkDTO()) {
+                if (authService.isSessionAlive(sessionToken)) {
+                    if (authService.isSessionPsikolog(sessionToken)) {
+                        Psikolog psikolog = authService.findLoginInfoByToken(sessionToken).get().getIdPsikolog();
+                        Optional<PsikologChatRoom> roomOptional = psikologService.getChatRoomByPsikologAndId(psikolog,
+                                chatRoomId);
+                        if (roomOptional.isPresent()) {
+                            PsikologChatRoom chatRoom = roomOptional.get();
+                            Optional<BookingPsikolog> currentBookingOptional = psikologService
+                                    .findCurrentBookingByPsikolog(psikolog);
+                            if (currentBookingOptional.isPresent()) {
+                                BookingPsikolog currentBooking = currentBookingOptional.get();
+                                if (psikologService.findChatRoomByBooking(currentBooking).equals(chatRoom)) {
+                                    psikologService.sendChatPsikolog(chatRoom, chatDTO);
+                                    data = Map.of(
+                                            "chatRoomId", chatRoom.getId(),
+                                            "psikologId", chatRoom.getIdPsikolog().getId(),
+                                            "userId", chatRoom.getIdUser().getId(),
+                                            "psikologName", chatRoom.getIdPsikolog().getNama(),
+                                            "chats", psikologService.getChatsFromChatRoom(chatRoom));
+                                } else {
+                                    httpCode = HTTPCode.FORBIDDEN;
+                                    data = new ErrorMessage(httpCode, "Bukan Sesi Yang Sedang Berjalan");
+                                }
+                            } else {
+                                httpCode = HTTPCode.FORBIDDEN;
+                                data = new ErrorMessage(httpCode, "Tidak Ada Bookingan Sedang Berjalan");
+                            }
+                        } else {
+                            httpCode = HTTPCode.NOT_FOUND;
+                            data = new ErrorMessage(httpCode, "Chat Room Tidak Ditemukan");
+                        }
+                    } else {
+                        httpCode = HTTPCode.FORBIDDEN;
+                        data = new ErrorMessage(httpCode, "Akses Anda Ditolak Untuk Fitur Ini");
+                    }
+                } else {
+                    httpCode = HTTPCode.UNAUTHORIZED;
+                    data = new ErrorMessage(httpCode, "Session Token Tidak Valid, Mohon Melakukan Login Kembali");
+                }
+            } else {
+                httpCode = HTTPCode.BAD_REQUEST;
+                data = new ErrorMessage(httpCode, "Data Chat Tidak Valid");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
+    @PostMapping("/chatRoom/{chatRoomId}/user")
+    public ResponseEntity<Object> sendChatUser(HttpServletRequest request, @PathVariable String chatRoomId,
+            @RequestBody ChatDTO chatDTO)
+            throws Exception {
+        String sessionToken = request.getHeader("Token");
+        HTTPCode httpCode = HTTPCode.OK;
+        try {
+            if (chatDTO.checkDTO()) {
+                if (authService.isSessionAlive(sessionToken)) {
+                    if (authService.isSessionUser(sessionToken)) {
+                        User user = authService.findLoginInfoByToken(sessionToken).get().getIdUser();
+                        Optional<PsikologChatRoom> roomOptional = psikologService.getChatRoomByUserAndId(user,
+                                chatRoomId);
+                        if (roomOptional.isPresent()) {
+                            PsikologChatRoom chatRoom = roomOptional.get();
+                            Optional<BookingPsikolog> currentBookingOptional = psikologService
+                                    .findCurrentBookingByUser(user);
+                            if (currentBookingOptional.isPresent()) {
+                                BookingPsikolog currentBooking = currentBookingOptional.get();
+                                if (psikologService.findChatRoomByBooking(currentBooking).equals(chatRoom)) {
+                                    psikologService.sendChatUser(chatRoom, chatDTO);
+                                    data = Map.of(
+                                            "chatRoomId", chatRoom.getId(),
+                                            "psikologId", chatRoom.getIdPsikolog().getId(),
+                                            "userId", chatRoom.getIdUser().getId(),
+                                            "psikologName", chatRoom.getIdPsikolog().getNama(),
+                                            "chats", psikologService.getChatsFromChatRoom(chatRoom));
+                                } else {
+                                    httpCode = HTTPCode.FORBIDDEN;
+                                    data = new ErrorMessage(httpCode, "Bukan Sesi Yang Sedang Berjalan");
+                                }
+                            } else {
+                                httpCode = HTTPCode.FORBIDDEN;
+                                data = new ErrorMessage(httpCode, "Tidak Ada Bookingan Sedang Berjalan");
+                            }
+                        } else {
+                            httpCode = HTTPCode.NOT_FOUND;
+                            data = new ErrorMessage(httpCode, "Chat Room Tidak Ditemukan");
+                        }
+                    } else {
+                        httpCode = HTTPCode.FORBIDDEN;
+                        data = new ErrorMessage(httpCode, "Akses Anda Ditolak Untuk Fitur Ini");
+                    }
+                } else {
+                    httpCode = HTTPCode.UNAUTHORIZED;
+                    data = new ErrorMessage(httpCode, "Session Token Tidak Valid, Mohon Melakukan Login Kembali");
+                }
+            } else {
+                httpCode = HTTPCode.BAD_REQUEST;
+                data = new ErrorMessage(httpCode, "Data Chat Tidak Valid");
+            }
+        } catch (IllegalArgumentException e) {
+            httpCode = HTTPCode.BAD_REQUEST;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        } catch (Exception e) {
+            httpCode = HTTPCode.INTERNAL_SERVER_ERROR;
+            data = new ErrorMessage(httpCode, e.getMessage());
+        }
+        return ResponseEntity
+                .status(httpCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
+    }
+
     @GetMapping("/chatRoom/{chatRoomId}")
     public ResponseEntity<Object> getChatRoomById(HttpServletRequest request, @PathVariable String chatRoomId)
             throws Exception {
@@ -56,19 +185,16 @@ public class PsikologController {
                     Optional<PsikologChatRoom> roomOptional = psikologService.getChatRoomByUserAndId(user, chatRoomId);
                     if (roomOptional.isPresent()) {
                         PsikologChatRoom chatRoom = roomOptional.get();
+                        psikologService.seeChatFromUser(chatRoom);
                         data = Map.of(
                                 "chatRoomId", chatRoom.getId(),
                                 "psikologId", chatRoom.getIdPsikolog().getId(),
                                 "userId", chatRoom.getIdUser().getId(),
                                 "psikologName", chatRoom.getIdPsikolog().getNama(),
-                                "lastChatDateTime", chatRoom.getLastChatDateTime(),
-                                "lastChat",
-                                Optional.ofNullable(chatRoom.getLastChat()).map(chat -> chat.getChat()).orElse(""),
-                                "lastChatIsPsikolog", Optional.ofNullable(chatRoom.getLastChat())
-                                        .map(chat -> chat.getIsPsikolog()).orElse(false));
+                                "chats", psikologService.getChatsFromChatRoom(chatRoom));
                     } else {
                         httpCode = HTTPCode.NOT_FOUND;
-                    data = new ErrorMessage(httpCode, "Chat Room Tidak Ditemukan");
+                        data = new ErrorMessage(httpCode, "Chat Room Tidak Ditemukan");
                     }
                 } else {
                     httpCode = HTTPCode.FORBIDDEN;
@@ -169,7 +295,7 @@ public class PsikologController {
                                             "editedAt", booking.getEditedAt(),
                                             "userId", booking.getIdUser().getId(),
                                             "psikologId", booking.getIdPsikolog().getId(),
-                                            "chatRoomId", psikologService.findByBooking(booking).getId());
+                                            "chatRoomId", psikologService.findChatRoomByBooking(booking).getId());
                                 } else {
                                     httpCode = HTTPCode.FORBIDDEN;
                                     data = new ErrorMessage(httpCode, "Bukan Bookingan Anda");
@@ -281,7 +407,7 @@ public class PsikologController {
                                 "editedAt", booking.getEditedAt(),
                                 "userId", booking.getIdUser().getId(),
                                 "psikologId", booking.getIdPsikolog().getId(),
-                                "chatRoomId", psikologService.findByBooking(booking).getId());
+                                "chatRoomId", psikologService.findChatRoomByBooking(booking).getId());
                     } else {
                         httpCode = HTTPCode.NOT_FOUND;
                         data = new ErrorMessage(httpCode, "Bookingan Tidak Ditemukan");
@@ -364,7 +490,7 @@ public class PsikologController {
                                 "editedAt", booking.getEditedAt(),
                                 "userId", booking.getIdUser().getId(),
                                 "psikologId", booking.getIdPsikolog().getId(),
-                                "chatRoomId", psikologService.findByBooking(booking).getId());
+                                "chatRoomId", psikologService.findChatRoomByBooking(booking).getId());
                     } else {
                         httpCode = HTTPCode.NOT_FOUND;
                         data = new ErrorMessage(httpCode, "Tidak Ada Bookingan Berjalan");

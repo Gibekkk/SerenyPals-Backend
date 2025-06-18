@@ -23,7 +23,7 @@ public class PromptDTO {
 
     public boolean checkLength() {
         boolean prompt = Optional.ofNullable(this.prompt)
-                .map(s -> s.length() <= 65535 && s.matches("^[a-zA-Z0-9. _%+-]+@[a-zA-Z0-9. -]+\\.[a-zA-Z]{2,}$"))
+                .map(s -> s.length() <= 65535)
                 .orElse(true);
 
         if (!prompt)
