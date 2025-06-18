@@ -56,6 +56,7 @@ public class CleanUpService {
     private int deleteDays = 30;
     private LocalDate today = LocalDate.now();
     private int OTP_DELETION = 30;
+    final private int minutesPerBookingSession = 50;
 
     private int compareDate(LocalDate deletedAt) {
         int daysElapsed = (int) ChronoUnit.DAYS.between(deletedAt, today);
@@ -84,7 +85,7 @@ public class CleanUpService {
         for (VirtualDiary virtualDiary : virtualDiaryRepository.findAll()) {
             if (inDeletion(virtualDiary.getDeletedAt())) {
                 User user = virtualDiary.getIdUser();
-                user.getVirtualDiaries().remove(virtualDiary);
+                user.getUserDiaries().remove(virtualDiary);
                 virtualDiaryRepository.delete(virtualDiary);
                 userRepository.save(user);
             }
@@ -124,7 +125,7 @@ public class CleanUpService {
     @Transactional
     public void cleanBooking() {
         for (BookingPsikolog bookingPsikolog : bookingPsikologRepository.findAll()) {
-            if (inDeletion(bookingPsikolog.getDeletedAt())) {
+            if (inDeletion(bookingPsikolog.getDeletedAt()) || bookingPsikolog.getStartAt().plusMinutes(minutesPerBookingSession * bookingPsikolog.getJumlahSesi()).isBefore(LocalDateTime.now())) {
                 User user = bookingPsikolog.getIdUser();
                 bookingPsikolog.setIdUser(null);
                 Psikolog psikolog = bookingPsikolog.getIdPsikolog();

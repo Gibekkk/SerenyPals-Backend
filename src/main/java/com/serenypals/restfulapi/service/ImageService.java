@@ -150,7 +150,7 @@ public class ImageService {
         Path filePath = Paths.get(imagePath);
         if (Files.exists(filePath) && !imagePath.equals("")) {
             String returnPath = filePath.toString();
-            String encodedPath = Base64.getEncoder().encodeToString(returnPath.getBytes());
+            String encodedPath = base64Converter.decrypt(returnPath);
             return serverPath + "images/" + encodedPath;
         }
         return "";
