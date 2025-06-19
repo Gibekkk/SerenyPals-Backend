@@ -8,5 +8,5 @@ import com.serenypals.restfulapi.model.Psikolog;
 import com.serenypals.restfulapi.model.User;
 
 public interface PsikologChatRoomRepository extends JpaRepository<PsikologChatRoom, String> {
-    Optional<PsikologChatRoom> findByIdPsikologAndIdUser(Psikolog psikolog, User user)
+    Optional<PsikologChatRoom> findByIdPsikologAndIdUser(Psikolog psikolog, User user);
 }
