@@ -10,16 +10,20 @@ https://github.com/Gibekkk/SerenyPals-ADR
 <h1 align="left">SERENYPALS-BACKEND</h1>
 <p><em>Empowering Growth Through Seamless Mental Wellness Solutions</em></p>
 
-<img alt="last-commit" src="https://img.shields.io/github/last-commit/Gibekkk/SerenyPals-Backend?style=flat&logo=git&logoColor=white&color=0080ff" style="margin: 0px 2px; display: inline">
-<img alt="repo-top-language" src="https://img.shields.io/github/languages/top/Gibekkk/SerenyPals-Backend?style=flat&color=0080ff" style="margin: 0px 2px; display: inline">
-<img alt="repo-language-count" src="https://img.shields.io/github/languages/count/Gibekkk/SerenyPals-Backend?style=flat&color=0080ff" style="margin: 0px 2px; display: inline">
+<div align="left">
+  <img alt="last-commit" src="https://img.shields.io/github/last-commit/Gibekkk/SerenyPals-Backend?style=flat&logo=git&logoColor=white&color=0080ff" style="margin: 0px 2px;">
+  <img alt="repo-top-language" src="https://img.shields.io/github/languages/top/Gibekkk/SerenyPals-Backend?style=flat&color=0080ff" style="margin: 0px 2px;">
+  <img alt="repo-language-count" src="https://img.shields.io/github/languages/count/Gibekkk/SerenyPals-Backend?style=flat&color=0080ff" style="margin: 0px 2px;">
+</div>
 
-<p><em>Built with the tools and technologies:</em></p>
-<img alt="Markdown" src="https://img.shields.io/badge/Markdown-000000.svg?style=flat&logo=Markdown&logoColor=white" style="margin: 0px 2px;">
-<img alt="Spring" src="https://img.shields.io/badge/Spring-000000.svg?style=flat&logo=Spring&logoColor=white" style="margin: 0px 2px;">
-<img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white" style="margin: 0px 2px;">
-<img alt="XML" src="https://img.shields.io/badge/XML-005FAD.svg?style=flat&logo=XML&logoColor=white" style="margin: 0px 2px;">
-<img alt="phpMyAdmin" src="https://img.shields.io/badge/phpMyAdmin-6C78AF.svg?style=flat&logo=phpMyAdmin&logoColor=white" style="margin: 0px 2px;">
+<p align="left"><em>Built with the tools and technologies:</em></p>
+<div align="left">
+  <img alt="Markdown" src="https://img.shields.io/badge/Markdown-000000.svg?style=flat&logo=Markdown&logoColor=white" style="margin: 0px 2px;">
+  <img alt="Spring" src="https://img.shields.io/badge/Spring-000000.svg?style=flat&logo=Spring&logoColor=white" style="margin: 0px 2px;">
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white" style="margin: 0px 2px;">
+  <img alt="XML" src="https://img.shields.io/badge/XML-005FAD.svg?style=flat&logo=XML&logoColor=white" style="margin: 0px 2px;">
+  <img alt="phpMyAdmin" src="https://img.shields.io/badge/phpMyAdmin-6C78AF.svg?style=flat&logo=phpMyAdmin&logoColor=white" style="margin: 0px 2px;">
+</div>
 
 <br>
 <hr>
