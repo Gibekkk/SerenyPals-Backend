@@ -188,7 +188,11 @@ public class AuthService {
         Optional<Session> sessionOptional = sessionRepository.findByToken(token);
         if (sessionOptional.isPresent()) {
             Session session = sessionOptional.get();
+            LoginInfo loginInfo = session.getIdLogin();
+            session.setIdLogin(null);
+            loginInfo.setSession(null);
             sessionRepository.delete(session);
+            loginInfoRepository.save(loginInfo);
             return true;
         }
         return false;
